@@ -1,0 +1,6 @@
+psycopg
+flask
+flasgger
+face_recognition
+logging
+
