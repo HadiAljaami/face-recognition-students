@@ -1,0 +1,42 @@
+#pip install psycopg[binary] => psycopg3
+#pip install pgvector
+#sqlite3 built in python
+
+#psql --version psql -U postgres
+\l  = to show database
+\encoding WIN1256 = endocding my system use this in psql to change
+\q = to logout of database
+
+\dt = show the tables in database
+
+-----------------
+pip install flask
+pip install flasgger
+
+
+
+
+set PGROOT=C:\Program Files\PostgreSQL\16
+
+
+------------------
+
+psql -U postgres -d vectors_db
+\dx = لعرض كل الامتداداتpsql -U postgres -d vectors_db
+SELECT * FROM student_vectors;
+\c vectors_db
+\d student_vectors
+SELECT * FROM student_vectors;
+
+SELECT typname FROM pg_type WHERE typname = 'vector';
+
+
+SELECT *, vector <-> '[0.1, 0.2, 0.3, ..., 0.128]' AS distance
+FROM student_vectors
+ORDER BY distance
+LIMIT 10;
+
+SELECT *, vector <-> '[0.1, 0.2, 0.3, ..., 0.128]' AS distance FROM student_vectors ORDER BY distance LIMIT 10;
+
+SELECT *, vector <-> ARRAY[0.1, 0.2, ..., 0.128]::vector AS distance FROM student_vectors ORDER BY distance LIMIT 10;
+
