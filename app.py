@@ -12,7 +12,7 @@ app = Flask(__name__)
 swagger = Swagger(app)
 app.static_url_path = "/static"
 app.static_folder = "database/student_images"
-# CORS(app, origins=["http://localhost:3000"]) 
+CORS(app, origins=["http://localhost:3000"]) 
 
 # تسجيل المسارات
 app.register_blueprint(students_bp)
