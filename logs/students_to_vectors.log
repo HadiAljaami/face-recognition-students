@@ -1,3 +1,13 @@
 2025-01-03 00:07:04,731 - ERROR - Error processing batch [1, 7]: No students found for the given IDs: [1, 7]
 2025-01-05 18:28:58,447 - ERROR - Error processing student ID 4024: connection failed: password authentication failed for user "postgres"
 2025-01-05 18:28:58,447 - ERROR - Error processing student ID 2025: [WinError 3] The system cannot find the path specified: 'database\\student_images\\images/john_doe.jpg'
+2025-01-08 22:56:32,492 - ERROR - Error processing student ID 2025: [WinError 3] The system cannot find the path specified: 'database\\student_images\\images/john_doe.jpg'
+2025-01-08 22:57:26,107 - ERROR - Error processing student ID 2025: [WinError 3] The system cannot find the path specified: 'database\\student_images\\images/john_doe.jpg'
+2025-01-08 22:57:27,669 - ERROR - Error processing student ID 4026: duplicate key value violates unique constraint "student_vectors_student_id_key"
+DETAIL:  Key (student_id)=(4026) already exists.
+2025-01-08 22:58:03,763 - ERROR - Error processing student ID 4024: duplicate key value violates unique constraint "student_vectors_student_id_key"
+DETAIL:  Key (student_id)=(4024) already exists.
+2025-01-08 22:58:05,238 - ERROR - Error processing student ID 4026: duplicate key value violates unique constraint "student_vectors_student_id_key"
+DETAIL:  Key (student_id)=(4026) already exists.
+2025-01-08 22:58:54,336 - ERROR - Error processing student ID 4026: duplicate key value violates unique constraint "student_vectors_student_id_key"
+DETAIL:  Key (student_id)=(4026) already exists.

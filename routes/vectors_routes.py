@@ -264,11 +264,13 @@ def search_vectors():
 
         # تحويل الصورة إلى متجه
         query_vector = ImageProcessor.convert_image_to_vector(temp_path)
-
+        
+        # print("hello")
         # البحث عن المتجهات المشابهة
         results = service.find_similar_vectors(query_vector, threshold, limit)
 
         # حذف الصورة المؤقتة
+        # print("hello")
         os.remove(temp_path)
 
         return jsonify({"results": results}), 200

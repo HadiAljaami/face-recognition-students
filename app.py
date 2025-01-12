@@ -1,7 +1,8 @@
 from flask import Flask, redirect, url_for
-from flask import Flask
 from flasgger import Swagger
 from routes.students_routes import students_bp
+from flask_cors import CORS
+
 
 from routes.vectors_routes import vectors_routes  # استيراد المسارات الجديدة
 from routes.students_to_vectors_route import students_to_vectors_route
@@ -9,6 +10,7 @@ app = Flask(__name__)
 
 # إعداد Swagger
 swagger = Swagger(app)
+CORS(app, origins=["http://localhost:3000"]) 
 
 # تسجيل المسارات
 app.register_blueprint(students_bp)

@@ -21,8 +21,8 @@ class VectorsService:
         return self.repository.get_vector_by_student_id(student_id)
 
     def find_similar_vectors(self, vector, threshold=0.8,limit=1):
-        print("length:",len(vector))
-        print("kind:", vector)
+        # print("length:",len(vector))
+        # print("kind:", vector)
 
         return self.repository.search_similar_vectors(vector, threshold,limit)
 
