@@ -3,12 +3,12 @@
 import psycopg
 
 # abod password
-# DB_URL = "postgresql://postgres:12345678@localhost:5432/vectors_db"
-# POSTGRES_URL = "postgresql://postgres:12345678@localhost:5432/postgres"
+DB_URL = "postgresql://postgres:12345678@localhost:5432/vectors_db"
+POSTGRES_URL = "postgresql://postgres:12345678@localhost:5432/postgres"
 
 # hadi password
-DB_URL = "postgresql://postgres:1234@localhost:5432/vectors_db"
-POSTGRES_URL = "postgresql://postgres:1234@localhost:5432/postgres"
+# DB_URL = "postgresql://postgres:1234@localhost:5432/vectors_db"
+# POSTGRES_URL = "postgresql://postgres:1234@localhost:5432/postgres"
 
 def execute_query(connection_url, query, fetch_one=False):
     try:

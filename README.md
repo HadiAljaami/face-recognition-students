@@ -66,7 +66,7 @@ Ensure you have Python 3 installed on your system.
    ```
    or
    ```bash
-   flask run --port=8080
+   flask run --port=8001
    ```
 2. Open your browser and navigate to `http://localhost:8080`.
 
