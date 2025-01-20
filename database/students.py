@@ -160,7 +160,7 @@ class Student:
         try:
             # بناء الاستعلام باستخدام IN
             placeholders = ', '.join(['?'] * len(ids))
-            query = f"SELECT StudentID,Number,StudentName,Gender,Level,Specialization,College, ImagePath FROM {self.table_name} WHERE StudentID IN ({placeholders})"
+            query = f"SELECT StudentID,Number,StudentName,Gender,Level,Specialization,College, ImagePath FROM {self.table_name} WHERE Number IN ({placeholders})"
             return self.execute_read_query(query, tuple(ids))
         except Exception as e:
             print(f"Error while fetching students by IDs: {e}")
