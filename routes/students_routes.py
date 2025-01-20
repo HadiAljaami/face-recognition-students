@@ -1,6 +1,11 @@
 from flask import Blueprint, jsonify, request
-from services.students_service import get_all_students, add_student,search_students_by_name,search_student_by_number,fetch_student_info_by_number
-
+from services.students_service import(
+  get_all_students, add_student,
+  search_students_by_name,
+  search_student_by_number,
+  fetch_student_info_by_number,
+  fetch_students_by_ids
+)
 from flasgger import Swagger, swag_from
 
 
@@ -199,3 +204,42 @@ def get_student_info():
 
     return jsonify({"error": "Student not found"}), 404
 
+
+@students_bp.route('/by-ids', methods=['POST'])
+def get_students_by_ids():
+    """
+    Retrieve students by their IDs
+    ---
+    tags:
+      - Students
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            ids:
+              type: array
+              items:
+                type: integer
+              description: List of student IDs
+    responses:
+      200:
+        description: A list of students matching the provided IDs
+      400:
+        description: Invalid request (no IDs provided)
+      404:
+        description: No students found with the provided IDs
+    """
+    data = request.get_json()
+    ids = data.get('ids', [])
+    
+    if not ids:
+        return jsonify({"error": "No IDs provided"}), 400
+
+    students = fetch_students_by_ids(ids)
+    if students:
+        return jsonify(students)
+    else:
+        return jsonify({"error": "No students found with the provided IDs"}), 404

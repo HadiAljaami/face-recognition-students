@@ -90,7 +90,7 @@ class VectorsRepository:
         """
         try: 
             query = """
-            SELECT *,   (1 - (vector <-> %s::vector)) * 100 AS similarity
+            SELECT id,student_id,college,created_at,   (1 - (vector <-> %s::vector)) * 100 AS similarity
             FROM student_vectors
             WHERE (vector <-> %s::vector) <= %s
             ORDER BY similarity DESC
@@ -110,7 +110,7 @@ class VectorsRepository:
         """
         try:#(vector <-> %s::vector) AS distance
             query = """
-            SELECT *,  (1 - (vector <-> %s::vector)) * 100 AS similarity
+            SELECT id,student_id,college,created_at,  (1 - (vector <-> %s::vector)) * 100 AS similarity
             FROM student_vectors
             WHERE college = %s AND (vector <-> %s::vector) <= %s
             ORDER BY similarity DESC

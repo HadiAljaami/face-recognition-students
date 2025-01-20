@@ -125,8 +125,6 @@ def fetch_students_by_ids(student_ids):
         if not student_ids or not isinstance(student_ids, list):
             raise ValueError("The input student IDs must be a non-empty list.")
 
-        # استدعاء دالة قاعدة البيانات لاسترجاع البيانات
-        student_db = Student()
         students_data = student_db.fetch_students_info_by_ids(student_ids)
 
         # التحقق من أن هناك بيانات مسترجعة
