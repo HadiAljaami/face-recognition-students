@@ -3,7 +3,7 @@ from services.students_to_vectors_service import StudentsToVectorsService
 
 students_to_vectors_route = Blueprint('students_to_vectors_route', __name__)
 
-@students_to_vectors_route.route('/api/students-to-vectors', methods=['POST'])
+@students_to_vectors_route.route('/api/students-to-vectors', methods=['POST', 'OPTIONS'])
 def students_to_vectors():
     """
     Process students to vectors using Student IDs
@@ -55,13 +55,24 @@ def students_to_vectors():
             error:
               type: string
     """
+    if request.method == 'OPTIONS':
+        # الرد على طلب OPTIONS
+        response = jsonify({"message": "Preflight request accepted"})
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        return response
+
     try:
         # استقبال معرفات الطلاب من الطلب
         student_ids = request.json
+        # print("dsf")
+        # print(student_ids)
 
         # التحقق من صحة المدخلات
         if not student_ids or not isinstance(student_ids, list):
-            return jsonify({"error": "Input must be a non-empty list of Student IDs"}), 400
+          print(student_ids)
+          return jsonify({"error": "Input must be a non-empty list of Student IDs"}), 400
 
         # معالجة الطلاب وتحويل الصور إلى فكتورز
         result = StudentsToVectorsService.process_students_to_vectors(student_ids)
