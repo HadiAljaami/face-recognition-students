@@ -58,7 +58,7 @@ def students_to_vectors():
     if request.method == 'OPTIONS':
         # الرد على طلب OPTIONS
         response = jsonify({"message": "Preflight request accepted"})
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Origin", "*")
         response.headers.add("Access-Control-Allow-Methods", "POST")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         return response

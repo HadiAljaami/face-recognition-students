@@ -22,3 +22,4 @@ DETAIL:  Key (student_id)=(22164060) already exists.
 DETAIL:  Key (student_id)=(22164060) already exists.
 2025-01-21 18:14:33,974 - ERROR - Error processing batch [9]: No students found for the given IDs: [9]
 2025-01-21 18:19:13,247 - ERROR - Error processing batch [9, 10]: No students found for the given IDs: [9, 10]
+2025-01-21 18:57:42,984 - ERROR - Error processing batch [10, 9]: No students found for the given IDs: [10, 9]
