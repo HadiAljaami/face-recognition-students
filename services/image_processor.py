@@ -6,6 +6,7 @@ class ImageProcessor:
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
     MAX_FILE_SIZE_MB = 5
     MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+    LAMBDA = 0.5  # Factor to balance size vs. position in face selection
 
     @staticmethod
     def allowed_file(filename):
@@ -26,19 +27,38 @@ class ImageProcessor:
         return True
 
     @staticmethod
-    def validate_image(image):
-        """Validate the image by ensuring it contains exactly one face."""
-        face_locations = face_recognition.face_locations(image)
-        if len(face_locations) != 1:
-            raise ValueError("Image must contain exactly one face.")
-        return True
-
-    @staticmethod
-    def extract_face_vector(image):
-        """Extract the face vector from an image."""
-        face_encodings = face_recognition.face_encodings(image)
+    def extract_best_face_vector(image):
+        """Extract the best face vector from an image using a mix of size and position."""
+        face_locations = face_recognition.face_locations(image)  # Using default model for better accuracy
+        if not face_locations:
+            raise ValueError("No face detected in the image.")
+        
+        if len(face_locations) == 1:
+            # Directly process a single detected face without passing `known_face_locations`
+            face_encodings = face_recognition.face_encodings(image)
+            if not face_encodings:
+                raise ValueError("Unable to extract face vector.")
+            return face_encodings[0].tolist()
+        
+        # Multiple faces detected → Select the best face based on size and position
+        image_height, image_width, _ = image.shape
+        image_center_x, image_center_y = image_width // 2, image_height // 2
+        
+        def calculate_score(face):
+            top, right, bottom, left = face
+            width, height = right - left, bottom - top
+            size = width * height
+            face_center_x, face_center_y = left + width // 2, top + height // 2
+            distance = ((face_center_x - image_center_x) ** 2 + (face_center_y - image_center_y) ** 2) ** 0.5
+            return size - (ImageProcessor.LAMBDA * distance)
+        
+        best_face = max(face_locations, key=calculate_score)
+        
+        # Compute encoding only for the selected face
+        face_encodings = face_recognition.face_encodings(image, known_face_locations=[best_face])
         if not face_encodings:
             raise ValueError("Unable to extract face vector.")
+        
         return face_encodings[0].tolist()
 
     @staticmethod
@@ -52,15 +72,10 @@ class ImageProcessor:
             # Check image size
             ImageProcessor.check_image_size(image_path)
 
-            # Load the image once
+            # Load the image
             image = face_recognition.load_image_file(image_path)
 
-            # Validate the image (check for exactly one face)
-            ImageProcessor.validate_image(image)
-
-            # Extract the face vector
-            vector = ImageProcessor.extract_face_vector(image)
-            return vector
+            # Extract the best face vector
+            return ImageProcessor.extract_best_face_vector(image)
         except Exception as e:
-            # Raise the exception to be handled by the caller
-            raise
+            raise ValueError(f"Error processing image: {str(e)}")
