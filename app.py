@@ -1,11 +1,14 @@
 from flask import Flask, redirect, url_for
 from flasgger import Swagger
-from routes.students_routes import students_bp
 from flask_cors import CORS
+#from flask_jwt_extended import JWTManager # dont delete !!!
 
-
+from routes.students_routes import students_bp
 from routes.vectors_routes import vectors_routes  # استيراد المسارات الجديدة
 from routes.students_to_vectors_route import students_to_vectors_route
+from routes.centers_routes import centers_bp
+from routes.users_routes import users_bp
+
 app = Flask(__name__)
 
 # إعداد Swagger
@@ -19,6 +22,15 @@ CORS(app)
 app.register_blueprint(students_bp)
 app.register_blueprint(vectors_routes, url_prefix="/vectors")  # تحديد المسار الأساسي لمسارات المتجهات
 app.register_blueprint(students_to_vectors_route)
+#app.register_blueprint(centers_bp, url_prefix='/api')
+app.register_blueprint(users_bp)
+app.register_blueprint(centers_bp)
+
+#----------don't delete----------------------
+# # JWT Configuration
+# app.config["JWT_SECRET_KEY"] = "super-secret-key"  # تغيير هذا المفتاح في البيئة الإنتاجية
+# jwt = JWTManager(app)
+#-------------------------------------------
 
 # إضافة مسار الصفحة الرئيسية
 @app.route('/')

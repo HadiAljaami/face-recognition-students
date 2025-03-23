@@ -3,12 +3,12 @@
 import psycopg
 
 # abod password
-DB_URL = "postgresql://postgres:12345678@localhost:5432/vectors_db"
-POSTGRES_URL = "postgresql://postgres:12345678@localhost:5432/postgres"
+# DB_URL = "postgresql://postgres:12345678@localhost:5432/vectors_db"
+# POSTGRES_URL = "postgresql://postgres:12345678@localhost:5432/postgres"
 
 # # # hadi password
-# DB_URL = "postgresql://postgres:1234@localhost:5432/vectors_db"
-# POSTGRES_URL = "postgresql://postgres:1234@localhost:5432/postgres"
+DB_URL = "postgresql://postgres:1234@localhost:5432/vectors_db"
+POSTGRES_URL = "postgresql://postgres:1234@localhost:5432/postgres"
 
 def execute_query(connection_url, query, fetch_one=False):
     try:
@@ -47,8 +47,8 @@ def create_extension():
         raise
 
 
-def create_table():
-    # إنشاء الجدول إذا لم يكن موجودًا
+def create_tables():
+    # Create student_vectors table if not exist
     query_create_table = (
         "CREATE TABLE IF NOT EXISTS student_vectors ("
         "id SERIAL PRIMARY KEY, "
@@ -58,14 +58,43 @@ def create_table():
         "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
         ");"
     )
+
+    #Create centers Table
+    query_create_exam_centers = (
+        "CREATE TABLE IF NOT EXISTS exam_centers ("
+        "id SERIAL PRIMARY KEY, "
+        "center_code VARCHAR(50) NOT NULL UNIQUE, "
+        "center_name VARCHAR(100) NOT NULL UNIQUE, "
+        "status INTEGER DEFAULT 1 CHECK (status IN (0, 1))"
+        ");"
+    )
+    
+    # Create Users Table
+    query_create_users = (
+        "CREATE TABLE IF NOT EXISTS users ("
+        "id SERIAL PRIMARY KEY, "
+        "username VARCHAR(50) NOT NULL UNIQUE, "
+        "password VARCHAR(255) NOT NULL, "
+        "role VARCHAR(10) CHECK (role IN ('Admin', 'User')) NOT NULL, "
+        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        ");"
+    )
+
     try:
         execute_query(DB_URL, query_create_table)
         print("Table 'student_vectors' created successfully.")
+
+        execute_query(DB_URL, query_create_exam_centers)
+        print("Table 'exam_centers' created successfully.")
+        
+        execute_query(DB_URL, query_create_users)
+        print("Table 'users' created successfully.")
+        
     except Exception as e:
-        print(f"Error creating table: {e}")
+        print(f"Error creating tables: {e}")
         raise
 
 if __name__ == "__main__":
     create_database()
     create_extension()
-    create_table()
+    create_tables()
