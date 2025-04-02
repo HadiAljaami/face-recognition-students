@@ -12,6 +12,10 @@ from routes.devices_routes import devices_bp
 
 from routes.exam_distribution_routes import exam_routes
 
+#------------academic------------------
+from routes.academic.colleges_routes import colleges_bp
+# -----------------------------
+
 app = Flask(__name__)
 
 # إعداد Swagger
@@ -28,9 +32,13 @@ app.register_blueprint(students_to_vectors_route)
 #app.register_blueprint(centers_bp, url_prefix='/api')
 app.register_blueprint(users_bp)
 app.register_blueprint(centers_bp)
-app.register_blueprint(devices_bp)
+#app.register_blueprint(devices_bp)
 
 app.register_blueprint(exam_routes)#, url_prefix="/exams"
+
+#------------academic------------------
+app.register_blueprint(colleges_bp)
+# -----------------------------
 
 #----------don't delete----------------------
 # # JWT Configuration
