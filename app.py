@@ -8,8 +8,9 @@ from routes.vectors_routes import vectors_routes  # استيراد المسار�
 from routes.students_to_vectors_route import students_to_vectors_route
 from routes.centers_routes import centers_bp
 from routes.users_routes import users_bp
+from routes.devices_routes import devices_bp
 
-from routes.exam_routes import exam_routes
+from routes.exam_distribution_routes import exam_routes
 
 app = Flask(__name__)
 
@@ -27,6 +28,7 @@ app.register_blueprint(students_to_vectors_route)
 #app.register_blueprint(centers_bp, url_prefix='/api')
 app.register_blueprint(users_bp)
 app.register_blueprint(centers_bp)
+app.register_blueprint(devices_bp)
 
 app.register_blueprint(exam_routes)#, url_prefix="/exams"
 

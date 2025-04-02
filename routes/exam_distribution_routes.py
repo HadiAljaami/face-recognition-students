@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from services.exam_service import ExamService
+from services.exam_distribution_service import ExamService
 from flasgger import swag_from
 
 exam_routes = Blueprint('exam_routes', __name__)
