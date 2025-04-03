@@ -13,7 +13,14 @@ from routes.devices_routes import devices_bp
 from routes.exam_distribution_routes import exam_routes
 
 #------------academic------------------
+from routes.academic.exams_routes import init_app
 from routes.academic.colleges_routes import colleges_bp
+from routes.academic.majors_routes import majors_bp
+from routes.academic.levels_routes import levels_bp
+from routes.academic.academic_years_routes import years_bp
+from routes.academic.semesters_routes import semesters_bp
+from routes.academic.courses_routes import courses_bp
+from routes.academic.exams_routes import exams_bp
 # -----------------------------
 
 app = Flask(__name__)
@@ -37,7 +44,16 @@ app.register_blueprint(centers_bp)
 app.register_blueprint(exam_routes)#, url_prefix="/exams"
 
 #------------academic------------------
+
 app.register_blueprint(colleges_bp)
+app.register_blueprint(majors_bp)
+app.register_blueprint(levels_bp)
+app.register_blueprint(years_bp)
+app.register_blueprint(semesters_bp)
+app.register_blueprint(courses_bp)
+app.register_blueprint(exams_bp)
+
+init_app(app)# for all time and date 
 # -----------------------------
 
 #----------don't delete----------------------

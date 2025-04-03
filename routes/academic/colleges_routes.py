@@ -8,7 +8,7 @@ service = CollegesService()
 
 @colleges_bp.route('/', methods=['POST'])
 @swag_from({
-    'tags':  ['Academic/Colleges'],
+    'tags': ['Academic/Colleges'],
     'description': 'Create new college',
     'parameters': [{
         'name': 'body',
@@ -23,10 +23,43 @@ service = CollegesService()
         }
     }],
     'responses': {
-        201: {'description': 'College created', 'schema': {'$ref': '#/definitions/College'}},
-        400: {'description': 'Validation error'},
-        409: {'description': 'College exists'},
-        500: {'description': 'Server error'}
+        201: {
+            'description': 'College created',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'college_id': {'type': 'integer', 'example': 1},
+                    'name': {'type': 'string', 'example': 'College of Science'}
+                }
+            }
+        },
+        400: {
+            'description': 'Validation error',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Name must be at least 2 characters'}
+                }
+            }
+        },
+        409: {
+            'description': 'College exists',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'College already exists'}
+                }
+            }
+        },
+        500: {
+            'description': 'Server error',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Internal server error'}
+                }
+            }
+        }
     }
 })
 def create_college():
@@ -45,8 +78,28 @@ def create_college():
     'tags': ['Academic/Colleges'],
     'description': 'List all colleges',
     'responses': {
-        200: {'description': 'Colleges list', 'schema': {'type': 'array', 'items': {'$ref': '#/definitions/College'}}},
-        500: {'description': 'Server error'}
+        200: {
+            'description': 'Colleges list',
+            'schema': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'college_id': {'type': 'integer', 'example': 1},
+                        'name': {'type': 'string', 'example': 'College of Science'}
+                    }
+                }
+            }
+        },
+        500: {
+            'description': 'Server error',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Internal server error'}
+                }
+            }
+        }
     }
 })
 def get_colleges():
@@ -56,12 +109,9 @@ def get_colleges():
     except Exception:
         return jsonify({'error': 'Server error'}), 500
 
-
-# routes/academic/colleges_routes.py (continued)
-
 @colleges_bp.route('/<int:college_id>', methods=['GET'])
 @swag_from({
-    'tags':  ['Academic/Colleges'],
+    'tags': ['Academic/Colleges'],
     'description': 'Get college by ID',
     'parameters': [{
         'name': 'college_id',
@@ -73,10 +123,32 @@ def get_colleges():
     'responses': {
         200: {
             'description': 'College details',
-            'schema': {'$ref': '#/definitions/College'}
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'college_id': {'type': 'integer', 'example': 1},
+                    'name': {'type': 'string', 'example': 'College of Science'}
+                }
+            }
         },
-        404: {'description': 'College not found'},
-        500: {'description': 'Server error'}
+        404: {
+            'description': 'College not found',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'College not found'}
+                }
+            }
+        },
+        500: {
+            'description': 'Server error',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Internal server error'}
+                }
+            }
+        }
     }
 })
 def get_college(college_id):
@@ -119,12 +191,50 @@ def get_college(college_id):
     'responses': {
         200: {
             'description': 'Updated college',
-            'schema': {'$ref': '#/definitions/College'}
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'college_id': {'type': 'integer', 'example': 1},
+                    'name': {'type': 'string', 'example': 'Updated College Name'}
+                }
+            }
         },
-        400: {'description': 'Validation error'},
-        404: {'description': 'College not found'},
-        409: {'description': 'College name already exists'},
-        500: {'description': 'Server error'}
+        400: {
+            'description': 'Validation error',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Name must be at least 2 characters'}
+                }
+            }
+        },
+        404: {
+            'description': 'College not found',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'College not found'}
+                }
+            }
+        },
+        409: {
+            'description': 'College name already exists',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'College name already exists'}
+                }
+            }
+        },
+        500: {
+            'description': 'Server error',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Internal server error'}
+                }
+            }
+        }
     }
 })
 def update_college(college_id):
@@ -140,7 +250,7 @@ def update_college(college_id):
 
 @colleges_bp.route('/<int:college_id>', methods=['DELETE'])
 @swag_from({
-    'tags':  ['Academic/Colleges'],
+    'tags': ['Academic/Colleges'],
     'description': 'Delete a college',
     'parameters': [{
         'name': 'college_id',
@@ -155,12 +265,28 @@ def update_college(college_id):
             'schema': {
                 'type': 'object',
                 'properties': {
-                    'message': {'type': 'string'}
+                    'message': {'type': 'string', 'example': 'College deleted successfully'}
                 }
             }
         },
-        404: {'description': 'College not found'},
-        500: {'description': 'Server error'}
+        404: {
+            'description': 'College not found',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'College not found'}
+                }
+            }
+        },
+        500: {
+            'description': 'Server error',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Internal server error'}
+                }
+            }
+        }
     }
 })
 def delete_college(college_id):
