@@ -7,45 +7,117 @@ import json
 exams_bp = Blueprint('exams', __name__, url_prefix='/api/academic/exams')
 service = ExamsService()
 
+# SWAGGER_TEMPLATE = {
+#     'definitions': {
+#         'Exam': {
+#             'type': 'object',
+#             'properties': {
+#                 'exam_id': {'type': 'integer', 'example': 1, 'readOnly': True},
+#                 'course_id': {'type': 'integer', 'example': 1, 'description': 'ID of the course'},
+#                 'major_id': {'type': 'integer', 'example': 1, 'description': 'ID of the major'},
+#                 'college_id': {'type': 'integer', 'example': 1, 'description': 'ID of the college'},
+#                 'level_id': {'type': 'integer', 'example': 1, 'description': 'ID of the level'},
+#                 'year_id': {'type': 'integer', 'example': 1, 'description': 'ID of the academic year'},
+#                 'semester_id': {'type': 'integer', 'example': 1, 'description': 'ID of the semester'},
+#                 'exam_date': {'type': 'string', 'format': 'date', 'example': '2023-12-15'},
+#                 'exam_start_time': {'type': 'string', 'format': 'time', 'example': '09:00:00'},
+#                 'exam_end_time': {'type': 'string', 'format': 'time', 'example': '11:00:00'},
+#                 'created_at': {
+#                     'type': 'string', 
+#                     'format': 'date-time',
+#                     'readOnly': True
+#                 },
+#                 # الحقول للعرض فقط (لا يتم إدخالها)
+#                 'course_name': {'type': 'string', 'readOnly': True},
+#                 'major_name': {'type': 'string', 'readOnly': True},
+#                 'college_name': {'type': 'string', 'readOnly': True},
+#                 'level_name': {'type': 'string', 'readOnly': True},
+#                 'year_name': {'type': 'string', 'readOnly': True},
+#                 'semester_name': {'type': 'string', 'readOnly': True}
+#             },
+#             'required': [
+#                 'course_id', 'major_id', 'college_id', 
+#                 'level_id', 'year_id', 'semester_id'
+#             ]
+#         },
+#         'TimeSlot': {
+#             'type': 'object',
+#             'properties': {
+#                 'start_time': {'type': 'string', 'format': 'time'},
+#                 'end_time': {'type': 'string', 'format': 'time'}
+#             }
+#         }
+#     }
+# }
+
+# SWAGGER_TEMPLATE = {
+#     'definitions': {
+#         'Exam': {
+#             'type': 'object',
+#             'properties': {
+#                 'exam_id': {'type': 'integer', 'example': 1},
+#                 'course': {
+#                     'type': 'object',
+#                     'properties': {
+#                         'course_id': {'type': 'integer', 'example': 1},
+#                         'course_name': {'type': 'string', 'example': 'Calculus'}
+#                     }
+#                 },
+#                 'major': {
+#                     'type': 'object',
+#                     'properties': {
+#                         'major_id': {'type': 'integer', 'example': 1},
+#                         'major_name': {'type': 'string', 'example': 'Computer Science'}
+#                     }
+#                 },
+#                 # ... بنفس النمط لباقي الكائنات ...
+#                 'exam_date': {'type': 'string', 'format': 'date'},
+#                 'exam_start_time': {'type': 'string', 'format': 'time'},
+#                 'exam_end_time': {'type': 'string', 'format': 'time'},
+#                 'created_at': {'type': 'string', 'format': 'date-time'}
+#             }
+#         }
+#     }
+# }
+
 SWAGGER_TEMPLATE = {
     'definitions': {
         'Exam': {
             'type': 'object',
             'properties': {
-                'exam_id': {'type': 'integer', 'example': 1, 'readOnly': True},
-                'course_id': {'type': 'integer', 'example': 1, 'description': 'ID of the course'},
-                'major_id': {'type': 'integer', 'example': 1, 'description': 'ID of the major'},
-                'college_id': {'type': 'integer', 'example': 1, 'description': 'ID of the college'},
-                'level_id': {'type': 'integer', 'example': 1, 'description': 'ID of the level'},
-                'year_id': {'type': 'integer', 'example': 1, 'description': 'ID of the academic year'},
-                'semester_id': {'type': 'integer', 'example': 1, 'description': 'ID of the semester'},
+                # للحقول المسطحة (للاستخدام في الإدخال)
+                'course_id': {'type': 'integer', 'example': 1},
+                'major_id': {'type': 'integer', 'example': 1},
+                'college_id': {'type': 'integer', 'example': 1},
+                'level_id': {'type': 'integer', 'example': 1},
+                'year_id': {'type': 'integer', 'example': 1},
+                'semester_id': {'type': 'integer', 'example': 1},
                 'exam_date': {'type': 'string', 'format': 'date', 'example': '2023-12-15'},
                 'exam_start_time': {'type': 'string', 'format': 'time', 'example': '09:00:00'},
                 'exam_end_time': {'type': 'string', 'format': 'time', 'example': '11:00:00'},
-                'created_at': {
-                    'type': 'string', 
-                    'format': 'date-time',
+                
+                # للحقول المتداخلة (للاستخدام في الإخراج)
+                'exam_id': {'type': 'integer', 'example': 1, 'readOnly': True},
+                'course': {
+                    'type': 'object',
+                    'properties': {
+                        'course_id': {'type': 'integer', 'readOnly': True},
+                        'course_name': {'type': 'string', 'readOnly': True}
+                    },
                     'readOnly': True
                 },
-                # الحقول للعرض فقط (لا يتم إدخالها)
-                'course_name': {'type': 'string', 'readOnly': True},
-                'major_name': {'type': 'string', 'readOnly': True},
-                'college_name': {'type': 'string', 'readOnly': True},
-                'level_name': {'type': 'string', 'readOnly': True},
-                'year_name': {'type': 'string', 'readOnly': True},
-                'semester_name': {'type': 'string', 'readOnly': True}
+                'major': {
+                    'type': 'object',
+                    'properties': {
+                        'major_id': {'type': 'integer', 'readOnly': True},
+                        'major_name': {'type': 'string', 'readOnly': True}
+                    },
+                    'readOnly': True
+                },
+                # ... نفس النمط لباقي الحقول ...
+                'created_at': {'type': 'string', 'format': 'date-time', 'readOnly': True}
             },
-            'required': [
-                'course_id', 'major_id', 'college_id', 
-                'level_id', 'year_id', 'semester_id'
-            ]
-        },
-        'TimeSlot': {
-            'type': 'object',
-            'properties': {
-                'start_time': {'type': 'string', 'format': 'time'},
-                'end_time': {'type': 'string', 'format': 'time'}
-            }
+            'required': ['course_id', 'major_id', 'college_id', 'level_id', 'year_id', 'semester_id']
         }
     }
 }
@@ -59,19 +131,56 @@ class DateTimeEncoder(json.JSONEncoder):
             return obj.isoformat()
         return super().default(obj)
 
+# def serialize_exam(exam):
+#     """Convert exam object to JSON-serializable dictionary"""
+#     if exam is None:
+#         return None
+    
+#     return {
+#         'exam_id': exam.get('exam_id'),
+#         'course_name': exam.get('course_name'),  # استخدام course_name بدلاً من course_id
+#         'major_name': exam.get('major_name'),    # استخدام major_name بدلاً من major_id
+#         'college_name': exam.get('college_name'),# استخدام college_name بدلاً من college_id
+#         'level_name': exam.get('level_name'),    # استخدام level_name بدلاً من level_id
+#         'year_name': exam.get('year_name'),      # استخدام year_name بدلاً من year_id
+#         'semester_name': exam.get('semester_name'),# استخدام semester_name بدلاً من semester_id
+#         'exam_date': exam.get('exam_date').isoformat() if exam.get('exam_date') else None,
+#         'exam_start_time': exam.get('exam_start_time').isoformat() if exam.get('exam_start_time') else None,
+#         'exam_end_time': exam.get('exam_end_time').isoformat() if exam.get('exam_end_time') else None,
+#         'created_at': exam.get('created_at').isoformat() if exam.get('created_at') else None
+#     }
+
 def serialize_exam(exam):
-    """Convert exam object to JSON-serializable dictionary"""
+    """Convert exam object to JSON-serializable dictionary with nested objects"""
     if exam is None:
         return None
     
     return {
         'exam_id': exam.get('exam_id'),
-        'course_name': exam.get('course_name'),  # استخدام course_name بدلاً من course_id
-        'major_name': exam.get('major_name'),    # استخدام major_name بدلاً من major_id
-        'college_name': exam.get('college_name'),# استخدام college_name بدلاً من college_id
-        'level_name': exam.get('level_name'),    # استخدام level_name بدلاً من level_id
-        'year_name': exam.get('year_name'),      # استخدام year_name بدلاً من year_id
-        'semester_name': exam.get('semester_name'),# استخدام semester_name بدلاً من semester_id
+        'course': {
+            'course_id': exam.get('course_id'),
+            'course_name': exam.get('course_name')
+        },
+        'major': {
+            'major_id': exam.get('major_id'),
+            'major_name': exam.get('major_name')
+        },
+        'college': {
+            'college_id': exam.get('college_id'),
+            'college_name': exam.get('college_name')
+        },
+        'level': {
+            'level_id': exam.get('level_id'),
+            'level_name': exam.get('level_name')
+        },
+        'year': {
+            'year_id': exam.get('year_id'),
+            'year_name': exam.get('year_name')
+        },
+        'semester': {
+            'semester_id': exam.get('semester_id'),
+            'semester_name': exam.get('semester_name')
+        },
         'exam_date': exam.get('exam_date').isoformat() if exam.get('exam_date') else None,
         'exam_start_time': exam.get('exam_start_time').isoformat() if exam.get('exam_start_time') else None,
         'exam_end_time': exam.get('exam_end_time').isoformat() if exam.get('exam_end_time') else None,
@@ -90,7 +199,19 @@ def init_app(app):
         'in': 'body',
         'required': True,
         'schema': {
-            '$ref': '#/definitions/Exam'
+            'type': 'object',
+            'properties': {
+                'course_id': {'type': 'integer', 'example': 1},
+                'major_id': {'type': 'integer', 'example': 1},
+                'college_id': {'type': 'integer', 'example': 1},
+                'level_id': {'type': 'integer', 'example': 1},
+                'year_id': {'type': 'integer', 'example': 1},
+                'semester_id': {'type': 'integer', 'example': 1},
+                'exam_date': {'type': 'string', 'format': 'date', 'example': '2023-12-15'},
+                'exam_start_time': {'type': 'string', 'format': 'time', 'example': '09:00:00'},
+                'exam_end_time': {'type': 'string', 'format': 'time', 'example': '11:00:00'}
+            },
+            'required': ['course_id', 'major_id', 'college_id', 'level_id', 'year_id', 'semester_id']
         }
     }],
     'responses': {
@@ -127,7 +248,6 @@ def create_exam():
         return jsonify({'error': str(e)}), code
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
-
 #-----------------filter using post-------------------------------
 
 # @exams_bp.route('/filter', methods=['POST'])  # تغيير من GET إلى POST

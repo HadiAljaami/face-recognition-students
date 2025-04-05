@@ -53,25 +53,31 @@ class ExamsRepository:
                     year_id, semester_id, exam_date, exam_start_time, 
                     exam_end_time, created_at
         )
-        SELECT 
+               SELECT 
             e.exam_id,
+            e.course_id,
             c.name AS course_name,
+            e.major_id,
             m.name AS major_name,
+            e.college_id,
             col.name AS college_name,
+            e.level_id,
             l.level_name,
-            y.year_name,
+            e.year_id,
+            ay.year_name,
+            e.semester_id,
             s.semester_name,
             e.exam_date,
             e.exam_start_time,
             e.exam_end_time,
             e.created_at
-        FROM inserted_exam e
+        FROM Exams e
         JOIN Courses c ON e.course_id = c.course_id
         JOIN Majors m ON e.major_id = m.major_id
         JOIN Colleges col ON e.college_id = col.college_id
         JOIN Levels l ON e.level_id = l.level_id
-        JOIN Academic_Years y ON e.year_id = y.year_id
-        JOIN Semesters s ON e.semester_id = s.semester_id;
+        JOIN Academic_Years ay ON e.year_id = ay.year_id
+        JOIN Semesters s ON e.semester_id = s.semester_id
         """)
         
         try:
@@ -201,24 +207,30 @@ class ExamsRepository:
                     # Fetch detailed info after update
                     cursor.execute("""
                         SELECT 
-                            e.exam_id,
-                            c.name AS course_name,
-                            m.name AS major_name,
-                            col.name AS college_name,
-                            l.level_name,
-                            y.year_name,
-                            s.semester_name,
-                            e.exam_date,
-                            e.exam_start_time,
-                            e.exam_end_time,
-                            e.created_at
-                        FROM Exams e
-                        JOIN Courses c ON e.course_id = c.course_id
-                        JOIN Majors m ON e.major_id = m.major_id
-                        JOIN Colleges col ON e.college_id = col.college_id
-                        JOIN Levels l ON e.level_id = l.level_id
-                        JOIN Academic_Years y ON e.year_id = y.year_id
-                        JOIN Semesters s ON e.semester_id = s.semester_id
+                                    e.exam_id,
+                                    e.course_id,
+                                    c.name AS course_name,
+                                    e.major_id,
+                                    m.name AS major_name,
+                                    e.college_id,
+                                    col.name AS college_name,
+                                    e.level_id,
+                                    l.level_name,
+                                    e.year_id,
+                                    ay.year_name,
+                                    e.semester_id,
+                                    s.semester_name,
+                                    e.exam_date,
+                                    e.exam_start_time,
+                                    e.exam_end_time,
+                                    e.created_at
+                                FROM Exams e
+                                JOIN Courses c ON e.course_id = c.course_id
+                                JOIN Majors m ON e.major_id = m.major_id
+                                JOIN Colleges col ON e.college_id = col.college_id
+                                JOIN Levels l ON e.level_id = l.level_id
+                                JOIN Academic_Years ay ON e.year_id = ay.year_id
+                                JOIN Semesters s ON e.semester_id = s.semester_id
                         WHERE e.exam_id = %s;
                     """, [exam_id])
 
@@ -231,18 +243,17 @@ class ExamsRepository:
         except errors.Error as e:
             raise RuntimeError(f"Database operation failed: {str(e)}")
 
-
     def filter_exams(self, 
-                major_id: int = None, 
-                college_id: int = None,
-                level_id: int = None, 
-                year_id: int = None,
-                semester_id: int = None,
-                exam_date: date = None,
-                start_time: time = None,
-                end_time: time = None) -> List[Dict]:
+                    major_id: int = None, 
+                    college_id: int = None,
+                    level_id: int = None, 
+                    year_id: int = None,
+                    semester_id: int = None,
+                    exam_date: date = None,
+                    start_time: time = None,
+                    end_time: time = None) -> List[Dict]:
         """
-        Filter exams with names from related tables and time range filtering
+        Filter exams with names and IDs from related tables and time range filtering
         
         Args:
             major_id: Filter by major ID
@@ -255,16 +266,22 @@ class ExamsRepository:
             end_time: Filter exams ending before this time
         
         Returns:
-            List of exam dictionaries with related names
+            List of exam dictionaries with both IDs and related names
         """
         base_query = sql.SQL("""
         SELECT 
             e.exam_id,
+            e.course_id,
             c.name AS course_name,
+            e.major_id,
             m.name AS major_name,
+            e.college_id,
             col.name AS college_name,
+            e.level_id,
             l.level_name,
+            e.year_id,
             ay.year_name,
+            e.semester_id,
             s.semester_name,
             e.exam_date,
             e.exam_start_time,
@@ -335,7 +352,7 @@ class ExamsRepository:
                     return cursor.fetchall()
         except errors.Error as e:
             raise RuntimeError(f"Database error: {str(e)}")
- 
+
     def get_exam_dates(self) -> List[date]:
         """Retrieve all distinct exam dates from database""" 
         query = sql.SQL("""
