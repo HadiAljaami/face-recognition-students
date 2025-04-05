@@ -7,10 +7,10 @@ def get_db_connection():
     try:
         conn = psycopg.connect(
             # abod
-            #"postgresql://postgres:12345678@localhost:5432/vectors_db",
+            "postgresql://postgres:12345678@localhost:5432/vectors_db",
 
             #hadi
-            "postgresql://postgres:1234@localhost:5432/vectors_db",
+            # "postgresql://postgres:1234@localhost:5432/vectors_db",
 
             row_factory=dict_row
         )
