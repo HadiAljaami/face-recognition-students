@@ -159,7 +159,8 @@ def create_tables2():
         year_id INT REFERENCES Academic_Years(year_id) ON DELETE RESTRICT,
         semester_id INT REFERENCES Semesters(semester_id) ON DELETE RESTRICT,
         exam_date DATE  NULL,
-        exam_time TIME  NULL,
+        exam_start_time TIME  NULL, 
+        exam_end_time TIME  NULL,   
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """
@@ -241,9 +242,70 @@ def create_tables3():
         raise
 
 
+def modify_exams_table():
+    print("Starting exams table modification...")
+    
+    # Check if table exists
+    if not execute_query(DB_URL, 
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'exams'",
+        fetch_one=True):
+        print("Error: 'exams' table doesn't exist!")
+        return False
+
+    # Check if old column exists
+    old_column_exists = execute_query(DB_URL,
+        "SELECT 1 FROM information_schema.columns WHERE table_name='exams' AND column_name='exam_time'",
+        fetch_one=True)
+
+    if not old_column_exists:
+        print("Old column 'exam_time' doesn't exist - no modification needed")
+        return True
+
+    # Add new columns if they don't exist
+    new_columns = [
+        ('exam_start_time', 'TIME NULL'),
+        ('exam_end_time', 'TIME NULL')
+    ]
+
+    for column_name, column_type in new_columns:
+        if not execute_query(DB_URL,
+            f"SELECT 1 FROM information_schema.columns WHERE table_name='exams' AND column_name='{column_name}'",
+            fetch_one=True):
+            
+            execute_query(DB_URL, f"ALTER TABLE exams ADD COLUMN {column_name} {column_type}")
+            print(f"Successfully added new column '{column_name}'")
+
+    # Migrate data from old column to new columns
+    # Assuming exam_time was the start time and exams last 2 hours by default
+    execute_query(DB_URL, """
+        UPDATE exams 
+        SET 
+            exam_start_time = exam_time,
+            exam_end_time = (exam_time + INTERVAL '2 hours')::TIME
+        WHERE exam_time IS NOT NULL
+    """)
+    print("Successfully migrated data from old to new columns")
+
+    # Add validation constraints
+    execute_query(DB_URL, """
+        ALTER TABLE exams 
+        ADD CONSTRAINT chk_exam_times 
+        CHECK (exam_start_time < exam_end_time)
+    """)
+    print("Added time validation constraints")
+
+    # Remove old column (comment this out if you want to wait)
+    execute_query(DB_URL, "ALTER TABLE exams DROP COLUMN exam_time")
+    print("Successfully dropped old 'exam_time' column")
+
+
+    print("All modifications completed successfully!")
+    return True
+
 if __name__ == "__main__":
     #create_database()
     #create_extension()
-    create_tables()
-    create_tables2()
-    create_tables3()
+    #create_tables()
+    #create_tables2()
+    #create_tables3()
+    modify_exams_table()
