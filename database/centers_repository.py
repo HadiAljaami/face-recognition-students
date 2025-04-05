@@ -27,18 +27,15 @@ class CentersRepository:
         query = "SELECT * FROM exam_centers WHERE id = %s;"
         return self._execute_query(query, (center_id,), fetch_one=True)
 
-    def add_center(self, center_code, center_name, status=1):
+    def add_center(self, center_name, status=1):
         query = """
-        INSERT INTO exam_centers (center_code, center_name, status) VALUES (%s, %s, %s) RETURNING *;
+        INSERT INTO exam_centers (center_name, status) VALUES (%s, %s) RETURNING *;
         """
-        return self._execute_query(query, (center_code, center_name, status), fetch_one=True)
+        return self._execute_query(query, (center_name, status), fetch_one=True)
 
-    def update_center(self, center_id, center_code=None, center_name=None, status=None):
+    def update_center(self, center_id, center_name=None, status=None):
         query = "UPDATE exam_centers SET "
         params = []
-        if center_code:
-            query += "center_code = %s, "
-            params.append(center_code)
         if center_name:
             query += "center_name = %s, "
             params.append(center_name)
@@ -56,13 +53,6 @@ class CentersRepository:
     def search_centers_by_name(self, name):
         query = "SELECT * FROM exam_centers WHERE center_name ILIKE %s;"
         return self._execute_query(query, (f"%{name}%",), fetch_all=True)
-
-    def search_centers_by_code(self, code):
-        query = "SELECT * FROM exam_centers WHERE center_code ILIKE %s;"
-        return self._execute_query(query, (f"%{code}%",), fetch_all=True)
-
-
-
 
 # class CentersRepository:
 #     def get_all_centers(self):

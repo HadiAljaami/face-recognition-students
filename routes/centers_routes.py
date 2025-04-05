@@ -22,8 +22,6 @@ def get_all_centers():
             properties:
               id:
                 type: integer
-              center_code:
-                type: string
               center_name:
                 type: string
               status:
@@ -57,8 +55,6 @@ def get_center(center_id):
           properties:
             id:
               type: integer
-            center_code:
-              type: string
             center_name:
               type: string
             status:
@@ -90,8 +86,6 @@ def add_center():
         schema:
           type: object
           properties:
-            center_code:
-              type: string
             center_name:
               type: string
             status:
@@ -104,8 +98,6 @@ def add_center():
           properties:
             id:
               type: integer
-            center_code:
-              type: string
             center_name:
               type: string
             status:
@@ -117,11 +109,10 @@ def add_center():
     """
     try:
         data = request.get_json()
-        if not data or not data.get('center_code') or not data.get('center_name'):
-            return jsonify({"error": "center_code and center_name are required"}), 400
+        if not data or not data.get('center_name'):
+            return jsonify({"error": "center_name is required"}), 400
 
         center = service.add_center(
-            center_code=data['center_code'],
             center_name=data['center_name'],
             status=data.get('status', 1)
         )
@@ -147,8 +138,6 @@ def update_center(center_id):
         schema:
           type: object
           properties:
-            center_code:
-              type: string
             center_name:
               type: string
             status:
@@ -161,8 +150,6 @@ def update_center(center_id):
           properties:
             id:
               type: integer
-            center_code:
-              type: string
             center_name:
               type: string
             status:
@@ -181,7 +168,6 @@ def update_center(center_id):
 
         center = service.update_center(
             center_id=center_id,
-            center_code=data.get('center_code'),
             center_name=data.get('center_name'),
             status=data.get('status')
         )
@@ -211,8 +197,6 @@ def delete_center(center_id):
           properties:
             id:
               type: integer
-            center_code:
-              type: string
             center_name:
               type: string
             status:
@@ -233,7 +217,7 @@ def delete_center(center_id):
 @centers_bp.route('/centers/search', methods=['GET'])
 def search_centers():
     """
-    Search centers by name or code
+    Search centers by name
     ---
     tags:
       - Centers
@@ -241,11 +225,7 @@ def search_centers():
       - name: name
         in: query
         type: string
-        required: false
-      - name: code
-        in: query
-        type: string
-        required: false
+        required: true
     responses:
       200:
         description: List of centers matching the search criteria
@@ -256,8 +236,6 @@ def search_centers():
             properties:
               id:
                 type: integer
-              center_code:
-                type: string
               center_name:
                 type: string
               status:
@@ -269,14 +247,10 @@ def search_centers():
     """
     try:
         name = request.args.get('name')
-        code = request.args.get('code')
-        if not name and not code:
-            return jsonify({"error": "Please provide name or code for search"}), 400
+        if not name:
+            return jsonify({"error": "Please provide name for search"}), 400
 
-        if name:
-            centers = service.search_centers_by_name(name)
-        else:
-            centers = service.search_centers_by_code(code)
+        centers = service.search_centers_by_name(name)
         return jsonify(centers)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -224,6 +224,7 @@ def create_tables3():
         "alert_type INTEGER NOT NULL REFERENCES alert_types(id) ON DELETE RESTRICT, "
         "alert_message TEXT, "
         "alert_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        "is_read BOOLEAN DEFAULT FALSE"
         ");"
     )
     
@@ -302,6 +303,94 @@ def modify_exams_table():
     print("All modifications completed successfully!")
     return True
 
+
+def modify_alerts_table():
+    print("Starting alerts table modification...")
+    
+    # Check if table exists
+    if not execute_query(DB_URL, 
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'alerts'",
+        fetch_one=True):
+        print("Error: 'alerts' table doesn't exist!")
+        return False
+
+    # Check if column already exists
+    column_exists = execute_query(DB_URL,
+        "SELECT 1 FROM information_schema.columns WHERE table_name='alerts' AND column_name='is_read'",
+        fetch_one=True)
+
+    if column_exists:
+        print("Column 'is_read' already exists - no modification needed")
+        return True
+
+    # Add new column with default value
+    try:
+        execute_query(DB_URL, """
+            ALTER TABLE alerts 
+            ADD COLUMN is_read BOOLEAN NOT NULL DEFAULT FALSE
+        """)
+        print("Successfully added new column 'is_read'")
+        
+        # Add index for better performance on read status queries
+        execute_query(DB_URL, """
+            CREATE INDEX idx_alerts_read_status 
+            ON alerts(is_read)
+        """)
+        print("Added index for read status column")
+        
+        # Optional: Add comment to column
+        execute_query(DB_URL, """
+            COMMENT ON COLUMN alerts.is_read 
+            IS 'Indicates whether alert has been reviewed by supervisor'
+        """)
+        print("Added column comment")
+        
+        print("All modifications completed successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"Error modifying alerts table: {str(e)}")
+        return False
+
+
+def modify_exam_centers_table():
+    print("Starting exam_centers table modification...")
+    
+    # Check if table exists
+    if not execute_query(DB_URL, 
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'exam_centers'",
+        fetch_one=True):
+        print("Error: 'exam_centers' table doesn't exist!")
+        return False
+
+    # Check if column exists
+    column_exists = execute_query(DB_URL,
+        "SELECT 1 FROM information_schema.columns WHERE table_name='exam_centers' AND column_name='center_code'",
+        fetch_one=True)
+
+    if not column_exists:
+        print("Column 'center_code' doesn't exist - no modification needed")
+        return True
+
+    # Remove the column
+    try:
+        execute_query(DB_URL, """
+            ALTER TABLE exam_centers 
+            DROP COLUMN center_code
+        """)
+        print("Successfully removed column 'center_code'")
+        
+        print("All modifications completed successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"Error modifying exam_centers table: {str(e)}")
+        return False
+
+
+
+
+
 if __name__ == "__main__":
     #create_database()
     #create_extension()
@@ -309,3 +398,5 @@ if __name__ == "__main__":
     #create_tables2()
     #create_tables3()
     modify_exams_table()
+    modify_alerts_table()
+    modify_exam_centers_table()
