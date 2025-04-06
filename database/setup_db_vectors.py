@@ -1,6 +1,7 @@
 # Step 3: Setup Database and Table (setup_db_vectors.py)
 # Located in setup_db_vectors.py
 import psycopg
+from psycopg import errors
 
 # abod password
 # DB_URL = "postgresql://postgres:12345678@localhost:5432/vectors_db"
@@ -388,6 +389,43 @@ def modify_exam_centers_table():
         return False
 
 
+def add_required_constraints():
+    """Adds all necessary UNIQUE constraints to enable ON CONFLICT functionality"""
+    constraints = [
+        {
+            'name': 'unique_major_name_per_college',
+            'table': 'Majors',
+            'columns': ['name', 'college_id'],
+            'message': "No duplicate major names per college"
+        },
+        {
+            'name': 'unique_course_details',
+            'table': 'Courses',
+            'columns': ['name', 'major_id', 'level_id', 'year_id', 'semester_id'],
+            'message': "No duplicate courses with same details"
+        }
+    ]
+
+    print("⏳ Adding required UNIQUE constraints...")
+    
+    for constraint in constraints:
+        columns = ", ".join(constraint['columns'])
+        query = f"""
+            ALTER TABLE {constraint['table']} 
+            ADD CONSTRAINT {constraint['name']} 
+            UNIQUE ({columns});
+        """
+        try:
+            execute_query(DB_URL, query)
+            print(f"✓ Added constraint '{constraint['name']}': {constraint['message']}")
+        except errors.DuplicateObject:
+            print(f"⚠ Constraint '{constraint['name']}' already exists")
+        except Exception as e:
+            print(f"❌ Failed to add constraint '{constraint['name']}': {e}")
+            raise
+
+    print("✅ Constraints setup completed")
+
 
 
 
@@ -397,6 +435,12 @@ if __name__ == "__main__":
     #create_tables()
     #create_tables2()
     #create_tables3()
-    modify_exams_table()
-    modify_alerts_table()
-    modify_exam_centers_table()
+    #modify_exams_table()
+    #modify_alerts_table()
+    #modify_exam_centers_table()
+
+    #==========================
+    print("\n" + "="*50)
+    print("Database UNIQUE Constraints Setup")
+    print("="*50 + "\n")
+    add_required_constraints()

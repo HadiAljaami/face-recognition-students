@@ -21,7 +21,10 @@ from routes.academic.academic_years_routes import years_bp
 from routes.academic.semesters_routes import semesters_bp
 from routes.academic.courses_routes import courses_bp
 from routes.academic.exams_routes import exams_bp
-# -----------------------------
+# -----------monitoring------------------
+from routes.monitoring.alert_type_routes import alert_type_bp
+
+#-----------------------------------------------
 
 app = Flask(__name__)
 
@@ -54,8 +57,10 @@ app.register_blueprint(courses_bp)
 app.register_blueprint(exams_bp)
 
 init_app(app)# for all time and date 
-# -----------------------------
+#-----------------monitoring--------------------------
 
+app.register_blueprint(alert_type_bp)
+#------------------------------------------
 #----------don't delete----------------------
 # # JWT Configuration
 # app.config["JWT_SECRET_KEY"] = "super-secret-key"  # تغيير هذا المفتاح في البيئة الإنتاجية
