@@ -21,9 +21,9 @@ from routes.academic.academic_years_routes import years_bp
 from routes.academic.semesters_routes import semesters_bp
 from routes.academic.courses_routes import courses_bp
 from routes.academic.exams_routes import exams_bp
-# -----------monitoring------------------
+# -----------monitoring----------------------
 from routes.monitoring.alert_type_routes import alert_type_bp
-
+from routes.monitoring.alert_routes import alert_bp
 #-----------------------------------------------
 
 app = Flask(__name__)
@@ -60,6 +60,7 @@ init_app(app)# for all time and date
 #-----------------monitoring--------------------------
 
 app.register_blueprint(alert_type_bp)
+app.register_blueprint(alert_bp)
 #------------------------------------------
 #----------don't delete----------------------
 # # JWT Configuration

@@ -64,7 +64,6 @@ def create_tables():
     query_create_exam_centers = (
         "CREATE TABLE IF NOT EXISTS exam_centers ("
         "id SERIAL PRIMARY KEY, "
-        "center_code VARCHAR(50) NOT NULL UNIQUE, "
         "center_name VARCHAR(100) NOT NULL UNIQUE, "
         "status INTEGER DEFAULT 1 CHECK (status IN (0, 1))"
         ");"
