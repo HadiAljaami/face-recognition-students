@@ -636,6 +636,46 @@ def get_course_stats():
     except Exception as e:
         return jsonify({ 'error': 'Server error'}), 500
 
+@alert_bp.route('/', methods=['DELETE'])
+@swag_from({
+    'tags': ['Alerts'],
+    'description': 'Delete alerts',
+    'parameters': [{
+        'name': 'body',
+        'in': 'body',
+        'required': True,
+        'schema': {
+            'type': 'object',
+            'properties': {
+                'alert_ids': {
+                    'type': 'array',
+                    'items': {'type': 'integer'},
+                    'example': [1, 2, 3]
+                }
+            },
+            'required': ['alert_ids']
+        }
+    }],
+    'responses': {
+        200: {
+            'description': 'Number of deleted alerts',
+            'examples': {'application/json': {'deleted': 3}}
+        },
+        400: {'description': 'Invalid input'},
+        500: {'description': 'Server error'}
+    }
+})
+def delete_alerts():
+    data = request.get_json()
+    try:
+        deleted = service.delete_alerts(data.get('alert_ids', []))
+        return jsonify({'deleted': deleted})
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # او استخدام get  في التعديل وجلب البيانات 
 # @alert_bp.route('/alerts/mark-and-get', methods=['GET'])
 # @swag_from({
@@ -766,11 +806,6 @@ def get_course_stats():
 #         return jsonify({
 #             'error': f'Failed to process the request: {str(e)}'
 #         }), 500
-
-
-
-
-
 
 #-------------------------------------------------------------------
 # @alert_bp.route('/', methods=['GET'])

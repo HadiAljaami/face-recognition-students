@@ -152,6 +152,15 @@ class AlertService:
         except Exception as e:
             raise Exception(f"Service error: {str(e)}")
         
+    def delete_alerts(self, alert_ids: List[int]) -> int:
+        """Delete alerts"""
+        if not alert_ids:
+            raise ValueError("No alert IDs provided")
+            
+        try:
+            return self.alert_repo.delete(alert_ids)
+        except Exception as e:
+            raise Exception(f"Service error: {str(e)}")
 
     # def get_alert_details(
     #     self,

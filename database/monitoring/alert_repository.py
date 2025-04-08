@@ -242,8 +242,7 @@ class AlertRepository:
                     return cursor.fetchall()
         except Exception as e:
             raise Exception(f"Database error while fetching college stats: {str(e)}")
-
-    
+  
     def get_major_level_stats(
         self, 
         college_id: Optional[int] = None, 
@@ -296,8 +295,7 @@ class AlertRepository:
                     return  cursor.fetchall()
         except Exception as e:
             raise Exception(f"Database error: {str(e)}")
-
-    
+  
     def get_course_cheating_stats(
         self,
         college_id: int,
@@ -358,6 +356,24 @@ class AlertRepository:
                     return  cursor.fetchall()
         except Exception as e:
             raise Exception(f"Database error: {str(e)}")
+
+    def delete(self, alert_ids: List[int]) -> int:
+        """Delete multiple alerts"""
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                   
+                    placeholders = ','.join(['%s'] * len(alert_ids))
+                    cursor.execute(
+                        f"DELETE FROM alerts WHERE alert_id IN ({placeholders})",
+                        alert_ids
+                    )
+                    deleted = cursor.rowcount
+                    conn.commit()
+                    return deleted
+        except Exception as e:
+            conn.rollback()
+         
 #-----------------------------------------------------
 
     # def get_by_id(self, alert_id: int) -> Optional[Dict]:
@@ -421,20 +437,3 @@ class AlertRepository:
     #     except Exception as e:
     #         conn.rollback()
     #         raise Exception(f"Database error: {str(e)}")
-
-    # def delete(self, alert_ids: List[int]) -> int:
-        # """Delete multiple alerts"""
-        # try:
-        #     with get_db_connection() as conn:
-        #         with conn.cursor() as cursor:
-        #             placeholders = ','.join(['%s'] * len(alert_ids))
-        #             cursor.execute(
-        #                 f"DELETE FROM alerts WHERE alert_id IN ({placeholders})",
-        #                 alert_ids
-        #             )
-        #             deleted = cursor.rowcount
-        #             conn.commit()
-        #             return deleted
-        # except Exception as e:
-        #     conn.rollback()
-        #     raise Exception(f"Database error: {str(e)}")
