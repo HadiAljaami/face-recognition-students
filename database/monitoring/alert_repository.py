@@ -135,7 +135,230 @@ class AlertRepository:
             with conn.cursor() as cursor:
                 cursor.execute(query, params)
                 conn.commit()
+#------------------------------------------------------
+    def get_student_cheating_reports(self, student_id: int) -> List[Dict]:
+            """
+            Retrieve detailed cheating reports for a specific student.
+            
+            Args:
+                student_id: The ID of the student to get reports for
+                
+            Returns:
+                List of dictionaries containing cheating report details
+                
+            Raises:
+                ValueError: If student_id is invalid
+                Exception: For database errors
+            """
+            if not isinstance(student_id, int) or student_id <= 0:
+                raise ValueError("Invalid student_id. It must be a positive integer.")
+    
+            query = """
+            SELECT 
+                a.student_id,
+                c.name AS college_name,
+                l.level_name,
+                m.name AS major_name,
+                y.year_name,
+                s.semester_name,
+                cr.name AS course_name,
+                e.exam_date,
+                e.exam_start_time,
+                e.exam_end_time,
+                ec.center_name,
+                d.room_number,
+                COUNT(a.alert_id) AS total_alerts,
+                e.exam_id,
+                    JSON_AGG(
+                    JSON_BUILD_OBJECT(
+                'alert_id', a.alert_id, 
+                        'alert_type', at.type_name,
+                        'alert_message', a.alert_message,
+                        'alert_timestamp', a.alert_timestamp,
+                        'is_read', a.is_read
+                    )
+                ) AS alerts_details
+            FROM alerts a
+            JOIN exams e ON a.exam_id = e.exam_id
+            JOIN courses cr ON e.course_id = cr.course_id
+            JOIN majors m ON e.major_id = m.major_id
+            JOIN colleges c ON e.college_id = c.college_id
+            JOIN levels l ON e.level_id = l.level_id
+            JOIN academic_years y ON e.year_id = y.year_id
+            JOIN semesters s ON e.semester_id = s.semester_id
+            JOIN devices d ON a.device_id = d.id
+            JOIN exam_centers ec ON d.center_id = ec.id
+            JOIN alert_types at ON a.alert_type = at.id
+            WHERE a.student_id =%(student_id)s 
+            GROUP BY 
+                a.student_id, c.name, l.level_name, m.name, y.year_name,
+                s.semester_name, cr.name, e.exam_date, e.exam_start_time,
+                e.exam_end_time, ec.center_name, d.room_number, e.exam_id
+            ORDER BY a.student_id, e.exam_date DESC;
+            """
+            
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cursor:
+                        cursor.execute(query, {'student_id': student_id})
+                        #cursor.execute(query, (student_id,))
+                        return cursor.fetchall()
+            except Exception as e:
+                raise Exception(f"Failed to get student reports: {str(e)}")
 
+    def get_college_cheating_stats(self, year_id: Optional[int] = None) -> List[Dict]:
+        """
+        Retrieve cheating statistics grouped by college and academic year.
+        
+        Args:
+            year_id: Optional academic year ID to filter by
+            
+        Returns:
+            List of dictionaries containing college cheating statistics
+            
+        Raises:
+            DatabaseError: If there's an error executing the query
+        """
+        query = """
+        SELECT 
+            c.name AS college_name,
+            ay.year_name AS academic_year,
+            COUNT(a.alert_id) AS total_cheating_cases,
+            COUNT(DISTINCT a.student_id) AS cheating_students_count
+        FROM alerts a
+        JOIN exams e ON a.exam_id = e.exam_id
+        JOIN colleges c ON e.college_id = c.college_id
+        JOIN academic_years ay ON e.year_id = ay.year_id
+        WHERE (%(year_id)s::INTEGER IS NULL OR e.year_id = %(year_id)s::INTEGER)
+        GROUP BY c.name, ay.year_name
+        ORDER BY c.name, ay.year_name, total_cheating_cases DESC;
+        """
+        
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+ 
+                    cursor.execute(query, {'year_id': year_id if year_id is not None else None}) 
+                    return cursor.fetchall()
+        except Exception as e:
+            raise Exception(f"Database error while fetching college stats: {str(e)}")
+
+    
+    def get_major_level_stats(
+        self, 
+        college_id: Optional[int] = None, 
+        year_id: Optional[int] = None
+    ) -> List[Dict]:
+        """
+        Get cheating statistics grouped by major, level, and academic year
+        
+        Args:
+            college_id: Optional college ID to filter by
+            year_id: Optional academic year ID to filter by
+            
+        Returns:
+            List of dictionaries containing statistics for each major/level/year combination
+            
+        Raises:
+            DatabaseError: If there's an error executing the query
+        """
+        query = """
+        SELECT 
+            c.name AS college_name,
+            m.name AS major_name,
+            l.level_name,
+            ay.year_name,
+            COUNT(a.alert_id) AS total_alerts,
+            COUNT(DISTINCT a.student_id) AS alerted_students_count
+        FROM alerts a
+        JOIN exams e ON a.exam_id = e.exam_id
+        JOIN majors m ON e.major_id = m.major_id
+        JOIN colleges c ON e.college_id = c.college_id
+        JOIN levels l ON e.level_id = l.level_id
+        JOIN academic_years ay ON e.year_id = ay.year_id
+        WHERE 
+            (%(college_id)s::INTEGER IS NULL OR e.college_id = %(college_id)s::INTEGER)
+            AND (%(year_id)s::INTEGER IS NULL OR e.year_id = %(year_id)s::INTEGER)
+        GROUP BY 
+            c.name,m.name, l.level_name, ay.year_name
+        ORDER BY 
+            COUNT(a.alert_id) DESC;
+        """
+        
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, {
+                        'college_id': college_id,
+                        'year_id': year_id
+                    })
+                    
+                    return  cursor.fetchall()
+        except Exception as e:
+            raise Exception(f"Database error: {str(e)}")
+
+    
+    def get_course_cheating_stats(
+        self,
+        college_id: int,
+        major_id: Optional[int] = None,
+        level_id: Optional[int] = None,
+        year_id: Optional[int] = None
+    ) -> List[Dict]:
+        """
+        Retrieve cheating statistics by course with filters
+        
+        Args:
+            college_id: Required college ID
+            major_id: Optional major ID filter
+            level_id: Optional level ID filter
+            year_id: Optional academic year ID filter
+            
+        Returns:
+            List of course cheating statistics
+        """
+        query = """
+        SELECT 
+            cr.name AS course_name,
+            COUNT(*) AS total_cheating_cases,
+            COUNT(DISTINCT a.student_id) AS cheating_students_count,
+            e.exam_date,
+            sem.semester_name,
+            ay.year_name AS academic_year,
+            m.name AS major_name,
+            l.level_name
+        FROM alerts a
+        JOIN exams e ON a.exam_id = e.exam_id
+        JOIN courses cr ON e.course_id = cr.course_id
+        JOIN majors m ON e.major_id = m.major_id
+        JOIN levels l ON e.level_id = l.level_id
+        JOIN academic_years ay ON e.year_id = ay.year_id
+        JOIN semesters sem ON e.semester_id = sem.semester_id
+        WHERE e.college_id = %(college_id)s::INTEGER
+          AND (%(major_id)s::INTEGER IS NULL OR e.major_id = %(major_id)s::INTEGER)
+          AND (%(level_id)s::INTEGER IS NULL OR e.level_id = %(level_id)s::INTEGER)
+          AND (%(year_id)s::INTEGER IS NULL OR e.year_id = %(year_id)s::INTEGER)
+        GROUP BY 
+            cr.name, e.exam_date, sem.semester_name, ay.year_name,
+            m.name, l.level_name
+        ORDER BY total_cheating_cases DESC;
+        """
+        if college_id is None:
+            raise ValueError("College ID is required and cannot be empty")
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, {
+                        'college_id': college_id,
+                        'major_id': major_id,
+                        'level_id': level_id,
+                        'year_id': year_id
+                    })
+                    
+                    return  cursor.fetchall()
+        except Exception as e:
+            raise Exception(f"Database error: {str(e)}")
+#-----------------------------------------------------
 
     # def get_by_id(self, alert_id: int) -> Optional[Dict]:
     #     """Get alert details with related data"""

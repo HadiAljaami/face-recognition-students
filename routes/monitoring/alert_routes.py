@@ -1,9 +1,17 @@
 from flask import Blueprint, request, jsonify
 from flasgger import swag_from
 from services.monitoring.alert_service import AlertService
-from datetime import datetime
+from datetime import date, time, datetime
 alert_bp = Blueprint('alerts', __name__, url_prefix='/api/alerts')
 service = AlertService()
+
+def convert_time_to_str(obj):
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    elif isinstance(obj, time):
+        return obj.strftime("%H:%M:%S")
+    return obj
+
 
 @alert_bp.route('/', methods=['POST'])
 @swag_from({
@@ -254,6 +262,379 @@ def get_and_mark_alerts():
             'error': f'Failed to process the request: {str(e)}'
         }), 500
 
+@alert_bp.route('/<int:student_id>/cheating-reports', methods=['GET'])
+@swag_from({
+    'tags': ['Cheating Statistics'],
+    'summary': 'Get detailed cheating reports for a specific student',
+    'parameters': [
+        {
+            'name': 'student_id',
+            'in': 'path',
+            'type': 'integer',
+            'required': True,
+            'description': 'ID of the student to retrieve cheating reports for'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'List of cheating reports grouped by exam',
+            'examples': {
+                'application/json': [
+                    {
+                        
+                    "alerts_details": [
+                        {
+                            "alert_id": 7,
+                            "alert_message": "Student using phone",
+                            "alert_timestamp": "2025-04-07T16:30:04.47731",
+                            "alert_type": "النظر إلى اليمين",
+                            "is_read": "true"
+                        },
+                        {
+                            "alert_id": 6,
+                            "alert_message": "Student using phone",
+                            "alert_timestamp": "2025-04-07T13:28:38.701102",
+                            "alert_type": "النظر إلى اليمين",
+                            "is_read":"true"
+                        }
+                        ],
+                        "center_name": "computer",
+                        "college_name": "االحاسوب وتكنلوجيا المعلومات",
+                        "course_name": "Introduction to Computer Science",
+                        "exam_date": "Thu, 15 Dec 2033 00:00:00 GMT",
+                        "exam_end_time": "11:00:00",
+                        "exam_id": 10,
+                        "exam_start_time": "09:00:00",
+                        "level_name": "First Year",
+                        "major_name": "علوم حاسوب",
+                        "room_number": "A101",
+                        "semester_name": "الترم الثاني",
+                        "student_id": 1001,
+                        "total_alerts": 2,
+                        "year_name": "2024-2025"
+                    }
+                ]
+            }
+        },
+        404: {
+            'description': 'No cheating reports found for the given student'
+        },
+        400: {
+            'description': 'Invalid student ID'
+        }
+    }
+})
+
+def get_student_cheating_reports(student_id):
+    """
+    Get detailed cheating reports for a specific student by ID.
+    """
+    try:
+        reports = service.get_student_cheating_reports(student_id)
+
+        for row in reports:
+                row['exam_start_time'] = convert_time_to_str(row['exam_start_time'])
+                row['exam_end_time'] = convert_time_to_str(row['exam_end_time'])
+
+                # إذا احتجت تحويل تواريخ أو تفاصيل داخل JSON_AGG
+                if isinstance(row['alerts_details'], list):
+                    for alert in row['alerts_details']:
+                        alert['alert_timestamp'] = convert_time_to_str(alert['alert_timestamp'])
+
+        if not reports:
+            return jsonify({'message': 'No cheating reports found for this student.'}), 404
+
+        return jsonify(reports), 200
+
+    except ValueError as ve:
+        return jsonify({'error': str(ve)}), 400
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@alert_bp.route('/alerts-colleges', methods=['GET'])
+@swag_from({
+    'tags': ['Cheating Statistics'],
+    'summary': 'Get cheating statistics by college',
+    'description': 'Retrieves cheating statistics grouped by college and academic year with optional year filter',
+    'parameters': [
+        {
+            'name': 'year_id',
+            'in': 'query',
+            'type': 'integer',
+            'required': False,
+            'description': 'Academic year ID to filter results (optional)'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'List of college cheating statistics',
+            'examples': {
+                'application/json': [
+                    {
+                        "college_name": "College of Engineering",
+                        "academic_year": "2023",
+                        "total_cheating_cases": 45,
+                        "cheating_students_count": 30
+                    },
+                    {
+                        "college_name": "College of Medicine",
+                        "academic_year": "2023",
+                        "total_cheating_cases": 30,
+                        "cheating_students_count": 22
+                    }
+                ]
+            }
+        },
+        404: {
+            'description': 'No statistics found for the specified criteria'
+        },
+        400: {
+            'description': 'Invalid year ID provided'
+        },
+        500: {
+            'description': 'Internal server error'
+        }
+    }
+})
+def get_college_cheating_stats():
+    """
+    Get cheating statistics grouped by college and academic year
+    
+    Args:
+        year_id (optional): Academic year ID to filter results
+        
+    Returns:
+        JSON response containing:
+        - college_name: Name of the college
+        - academic_year: Academic year name
+        - total_cheating_cases: Total number of cheating cases
+        - cheating_students_count: Number of distinct students who cheated
+    """
+    try:
+        # Get optional year_id parameter
+        year_id = request.args.get('year_id', type=int)
+        
+        # Validate year_id if provided
+        if year_id is not None and year_id <= 0:
+            return jsonify({
+                'error': 'Year ID must be a positive integer',}), 400
+
+        # Get statistics from service
+        stats = service.get_college_cheating_stats(year_id)
+
+        if not stats:
+            return jsonify({'message': 'No cheating statistics found for the specified criteria',}), 404
+
+        return jsonify(stats), 200
+
+    except ValueError as ve:
+        return jsonify({'error': str(ve)}), 400
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@alert_bp.route('/alerts-major-level', methods=['GET'])
+@swag_from({
+    'tags': ['Cheating Statistics'],
+    'summary': 'Get cheating stats by major, level, year and college',
+    'parameters': [
+        {
+            'name': 'college_id',
+            'in': 'query',
+            'type': 'integer',
+            'required': False,
+            'description': 'Filter by college ID'
+        },
+        {
+            'name': 'year_id',
+            'in': 'query',
+            'type': 'integer',
+            'required': False,
+            'description': 'Filter by academic year ID'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'List of cheating stats',
+            'examples': {
+                'application/json': [
+                    {
+                        "college_name": "الحاسوب وتكنولوجيا المعلومات",
+                        "major_name": "علوم حاسوب",
+                        "level_name": "السنة الأولى",
+                        "year_name": "2023-2024",
+                        "total_alerts": 15,
+                        "alerted_students_count": 10
+                    }
+                ]
+            }
+        },
+        400: {'description': 'Invalid input'},
+        404: {'description': 'No data found'},
+        500: {'description': 'Server error'}
+    }
+})
+def get_major_level_stats():
+    """
+    Get cheating statistics grouped by major, academic level and year
+    
+    Optional query parameters:
+    - college_id: Filter by specific college
+    - year_id: Filter by specific academic year
+    
+    Returns:
+    JSON response containing statistics for each major/level/year combination including:
+    - major_name: Name of the academic major
+    - level_name: Academic level (e.g., First Year)
+    - year_name: Academic year name
+    - total_alerts: Total number of cheating alerts
+    - alerted_students_count: Number of distinct students who cheated
+    """
+    try:
+        # Get optional query parameters
+        college_id = request.args.get('college_id', type=int)
+        year_id = request.args.get('year_id', type=int)
+
+        if college_id is not None and college_id <= 0:
+            return jsonify({'error': 'College ID must be positive'}), 400
+        if year_id is not None and year_id <= 0:
+            return jsonify({'error': 'Year ID must be positive'}), 400        
+                
+        stats = service.get_major_level_stats(college_id, year_id)
+        
+        return jsonify(stats), 200
+        
+    except ValueError as ve:
+        return jsonify({'error': str(ve)}), 400
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@alert_bp.route('/course-stats', methods=['GET'])
+@swag_from({
+    'tags': ['Cheating Statistics'],
+    'summary': 'Get cheating stats by course',
+    'parameters': [
+        {
+            'name': 'college_id',
+            'in': 'query',
+            'type': 'integer',
+            'required': True,
+            'description': 'College ID (required)'
+        },
+        {
+            'name': 'major_id',
+            'in': 'query',
+            'type': 'integer',
+            'required': False,
+            'description': 'Major ID filter'
+        },
+        {
+            'name': 'level_id',
+            'in': 'query',
+            'type': 'integer',
+            'required': False,
+            'description': 'Level ID filter'
+        },
+        {
+            'name': 'year_id',
+            'in': 'query',
+            'type': 'integer',
+            'required': False,
+            'description': 'Academic year ID filter'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Success',
+            'examples': {
+                'application/json': {
+                    'success': True,
+                    'data': [
+                        {
+                            'course_name': 'Math 101',
+                            'total_cheating_cases': 5,
+                            'cheating_students_count': 3,
+                            'exam_date': '2023-05-15',
+                            'semester_name': 'Fall',
+                            'academic_year': '2023-2024',
+                            'major_name': 'Computer Science',
+                            'level_name': 'First Year'
+                        }
+                    ]
+                }
+            }
+        },
+        400: {
+            'description': 'Invalid input',
+            'examples': {
+                'application/json': {
+                    'success': False,
+                    'error': 'Invalid college ID'
+                }
+            }
+        },
+        404: {
+            'description': 'No data found',
+            'examples': {
+                'application/json': {
+                    'success': False,
+                    'error': 'No data found'
+                }
+            }
+        },
+        500: {
+            'description': 'Server error',
+            'examples': {
+                'application/json': {
+                    'success': False,
+                    'error': 'Database error'
+                }
+            }
+        }
+    }
+})
+def get_course_stats():
+    """
+    Get cheating statistics grouped by course
+    
+    Returns JSON with:
+    - success: boolean status
+    - data: list of stats if success
+    - error: message if failed
+    """
+    college_id = request.args.get('college_id', type=int)
+    major_id = request.args.get('major_id', type=int,default=None)
+    level_id = request.args.get('level_id', type=int,default=None)
+    year_id = request.args.get('year_id', type=int,default=None)
+
+    # Validate mandatory college_id
+    if college_id is None:
+        return jsonify({'error': 'College ID is required'}), 400
+    if college_id <= 0:
+        return jsonify({'error': 'College ID must be a positive number'}), 400
+
+    # Validate optional parameters (must be positive if provided)
+    if major_id is not None and major_id <= 0:
+        return jsonify({'error': 'Major ID must be a positive number'}), 400
+    if level_id is not None and level_id <= 0:
+        return jsonify({'error': 'Level ID must be a positive number'}), 400
+    if year_id is not None and year_id <= 0:
+        return jsonify({'error': 'Year ID must be a positive number'}), 400
+
+    try:
+        result = service.get_course_stats(college_id, major_id, level_id, year_id)
+        
+        if not result:
+            return jsonify({'error': 'No data found'}), 404
+         
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({ 'error': 'Server error'}), 500
 
 # او استخدام get  في التعديل وجلب البيانات 
 # @alert_bp.route('/alerts/mark-and-get', methods=['GET'])
