@@ -293,3 +293,61 @@ def validate_token():
         return jsonify({'valid': False}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@devices_bp.route('/api/devices/show', methods=['GET'])
+@swag_from({
+    'tags': ['Devices'],
+    'description': 'Get device by ID or device number',
+    'parameters': [
+        {
+            'name': 'device_id',
+            'in': 'query',
+            'type': 'integer',
+            'required': False,
+            'description': 'Device ID'
+        },
+        {
+            'name': 'device_number',
+            'in': 'query',
+            'type': 'integer',
+            'required': False,
+            'description': 'Device number'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Device details',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'device': {'type': 'object'}
+                }
+            }
+        },
+        400: {'description': 'Missing or invalid parameters'},
+        404: {'description': 'Device not found'},
+        500: {'description': 'Internal server error'}
+    }
+})
+def get_device():
+    """جلب بيانات جهاز باستخدام id أو رقم الجهاز"""
+    try:
+        device_id = request.args.get('device_id', type=int)
+        device_number = request.args.get('device_number', type=int)
+
+        if not device_id and not device_number:
+            return jsonify({'error': 'يرجى توفير device_id أو device_number'}), 400
+
+        device = None
+        if device_id:
+            device = service.repository.get_device_by_id(device_id)
+        elif device_number:
+            device = service.get_device_by_number(device_number)
+
+        if device:
+            return jsonify({'device': device}), 200
+        else:
+            return jsonify({'error': 'Device not found'}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

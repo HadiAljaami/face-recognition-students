@@ -89,6 +89,20 @@ class DevicesRepository:
         except Exception as e:
             print(f"Error getting device by number: {e}")
             raise
+    def get_device_by_id(self, device_id: int) -> Optional[Dict]:
+        """البحث عن جهاز بواسطة رقم الجهاز"""
+        try:
+            query = """
+            SELECT * FROM devices
+            WHERE id = %s;
+            """
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, (device_id,))
+                    return cursor.fetchone()
+        except Exception as e:
+            print(f"Error getting device by number: {e}")
+            raise
 
     def get_all_devices(self, center_id: Optional[int] = None, 
                        room_number: Optional[str] = None) -> List[Dict]:
