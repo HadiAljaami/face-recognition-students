@@ -70,6 +70,98 @@ class AlertService:
 
             return alerts
 
+    def get_student_cheating_reports(self,  student_id: int):
+        cheating_reports=self.alert_repo.get_student_cheating_reports(student_id) 
+        return cheating_reports
+
+    def get_college_cheating_stats(self, year_id: Optional[int] = None) -> List[Dict]:
+        """
+        Get cheating statistics by college with optional year filter.
+        
+        Args:
+            year_id: Optional academic year ID to filter results
+            
+        Returns:
+            List of college cheating statistics
+            
+        Raises:
+            Exception: If there's an error processing the request
+        """
+        try:
+            stats = self.alert_repo.get_college_cheating_stats(year_id)
+            
+            if not stats:
+                raise Exception("No cheating statistics found for the specified criteria")
+                
+            return stats
+            
+        except Exception as e:
+            raise Exception(f"Failed to retrieve college statistics: {str(e)}")
+        
+    def get_major_level_stats(
+            self,
+            college_id: Optional[int] = None,
+            year_id: Optional[int] = None
+        ) -> List[Dict]:
+            
+            try:
+                # Validate input parameters
+                if college_id is not None and college_id <= 0:
+                    raise ValueError("College ID must be a positive integer")
+                if year_id is not None and year_id <= 0:
+                    raise ValueError("Year ID must be a positive integer")
+                
+                stats = self.alert_repo.get_major_level_stats(college_id, year_id)
+                
+                if not stats:
+                    raise ValueError("No statistics found for the specified criteria")
+                
+                return stats
+                
+            except Exception as e:
+                raise Exception(f"Failed to retrieve statistics: {str(e)}")
+
+    
+    def get_course_stats(
+        self,
+        college_id: int,
+        major_id: Optional[int] = None,
+        level_id: Optional[int] = None,
+        year_id: Optional[int] = None
+    ) -> Dict:
+        """
+        Get course cheating statistics with validation
+        
+        Args:
+            college_id: Required college ID
+            major_id: Optional major ID
+            level_id: Optional level ID
+            year_id: Optional academic year ID
+
+        """
+        try:
+
+            stats = self.alert_repo.get_course_cheating_stats(
+                college_id, major_id, level_id, year_id)
+            
+            if not stats:
+                raise Exception("No cheating statistics found for the specified criteria")
+                            
+            return  stats
+            
+        except Exception as e:
+            raise Exception(f"Service error: {str(e)}")
+        
+    def delete_alerts(self, alert_ids: List[int]) -> int:
+        """Delete alerts"""
+        if not alert_ids:
+            raise ValueError("No alert IDs provided")
+            
+        try:
+            return self.alert_repo.delete(alert_ids)
+        except Exception as e:
+            raise Exception(f"Service error: {str(e)}")
+
     # def get_alert_details(
     #     self,
     #     device_id: int,
