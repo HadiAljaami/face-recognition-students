@@ -120,6 +120,7 @@ def create_alert():
                     'center_name': 'Main Center',
                     'status': 1,
                     'alert_count': 3,
+                    "alert_id": 13,
                     'unread_count':2,
                     'last_alert_time': '2023-05-15T10:30:00',
                     'student_id': 1001,
