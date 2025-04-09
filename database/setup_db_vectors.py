@@ -242,6 +242,28 @@ def create_tables3():
         print(f"Error creating tables: {e}")
         raise
 
+def create_exam_distribution_table():
+    query_create_exam_distribution = (
+        """
+        CREATE TABLE IF NOT EXISTS exam_distribution (
+            id SERIAL PRIMARY KEY,
+            student_id VARCHAR(50) NOT NULL,
+            student_name VARCHAR(100) NOT NULL,
+            exam_id INTEGER REFERENCES Exams(exam_id) ON DELETE SET NULL,
+            device_id INTEGER REFERENCES devices(id) ON DELETE SET NULL,
+            assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (student_id, exam_id)
+        );
+        """
+    )
+
+    try:
+        execute_query(DB_URL, query_create_exam_distribution)
+        print("Table 'exam_distribution' created successfully.")
+    except Exception as e:
+        print(f"Error creating 'exam_distribution' table: {e}")
+
+
 
 def modify_exams_table():
     print("Starting exams table modification...")
@@ -439,7 +461,8 @@ if __name__ == "__main__":
     #modify_exam_centers_table()
 
     #==========================
-    print("\n" + "="*50)
-    print("Database UNIQUE Constraints Setup")
-    print("="*50 + "\n")
-    add_required_constraints()
+    # print("\n" + "="*50)
+    # print("Database UNIQUE Constraints Setup")
+    # print("="*50 + "\n")
+    # add_required_constraints()
+    create_exam_distribution_table()
