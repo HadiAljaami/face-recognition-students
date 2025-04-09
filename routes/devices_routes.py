@@ -8,7 +8,7 @@ devices_bp = Blueprint('devices', __name__) #, url_prefix='/api/devices'
 repository = DevicesRepository()
 service = DevicesService(repository)
 
-@devices_bp.route('/', methods=['POST'])
+@devices_bp.route('/api/devices/register', methods=['POST'])
 @swag_from({
     'tags': ['Devices'],
     'description': 'Register a new device',
@@ -60,7 +60,7 @@ def register_device():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@devices_bp.route('/', methods=['GET'])
+@devices_bp.route('/api/devices/index', methods=['GET'])
 @swag_from({
     'tags': ['Devices'],
     'description': 'Get all devices with optional filtering',
@@ -113,7 +113,7 @@ def get_devices():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@devices_bp.route('/<int:device_id>', methods=['PUT'])
+@devices_bp.route('/api/devices/update/<int:device_id>', methods=['PUT'])
 @swag_from({
     'tags': ['Devices'],
     'description': 'Update device information',
@@ -168,7 +168,7 @@ def update_device(device_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@devices_bp.route('/<int:device_id>/status', methods=['PATCH'])
+@devices_bp.route('/api/devices/toggle/<int:device_id>/status', methods=['PATCH'])
 @swag_from({
     'tags': ['Devices'],
     'description': 'Toggle device status',
@@ -208,7 +208,7 @@ def toggle_device_status(device_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@devices_bp.route('/<int:device_id>/token', methods=['PATCH'])
+@devices_bp.route('/api/devices/update-token/<int:device_id>/token', methods=['PATCH'])
 @swag_from({
     'tags': ['Devices'],
     'description': 'Refresh device token',
@@ -248,7 +248,7 @@ def refresh_device_token(device_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@devices_bp.route('/validate-token', methods=['POST'])
+@devices_bp.route('/api/devices/validate-token', methods=['POST'])
 @swag_from({
     'tags': ['Devices'],
     'description': 'Validate device token',
