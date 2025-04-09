@@ -42,7 +42,7 @@ app.register_blueprint(students_to_vectors_route)
 #app.register_blueprint(centers_bp, url_prefix='/api')
 app.register_blueprint(users_bp)
 app.register_blueprint(centers_bp)
-#app.register_blueprint(devices_bp)
+app.register_blueprint(devices_bp)
 
 app.register_blueprint(exam_routes)#, url_prefix="/exams"
 
