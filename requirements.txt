@@ -5,3 +5,4 @@ face_recognition
 logging
 psycopg3
 pgvector
+flask-jwt-extended
