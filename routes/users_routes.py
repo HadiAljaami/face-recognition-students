@@ -189,7 +189,7 @@ def update_user(user_id):
         if len(password) > 20:
             return jsonify({"error": "Password must not exceed 20 characters"}), 400
 
-        user = service.update_user(username=username, password=password, role=role)
+        user = service.update_user(user_id=user_id, username=username, password=password, role=role)
 
         if user:
             return jsonify(user)
@@ -277,46 +277,46 @@ def search_users():
     
 
 # dont delete !!!
-# @users_bp.route('/login', methods=['POST'])
-# def login():
-#     """
-#     User login
-#     ---
-#     tags:
-#       - Users
-#     parameters:
-#       - name: body
-#         in: body
-#         required: true
-#         schema:
-#           type: object
-#           properties:
-#             username:
-#               type: string
-#             password:
-#               type: string
-#     responses:
-#       200:
-#         description: Login successful
-#         schema:
-#           type: object
-#           properties:
-#             access_token:
-#               type: string
-#       401:
-#         description: Invalid username or password
-#       500:
-#         description: Internal server error
-#     """
-#     try:
-#         data = request.get_json()
-#         if not data or not data.get('username') or not data.get('password'):
-#             return jsonify({"error": "username and password are required"}), 400
+@users_bp.route('/login', methods=['POST'])
+def login():
+    """
+    User login
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+    responses:
+      200:
+        description: Login successful
+        schema:
+          type: object
+          properties:
+            access_token:
+              type: string
+      401:
+        description: Invalid username or password
+      500:
+        description: Internal server error
+    """
+    try:
+        data = request.get_json()
+        if not data or not data.get('username') or not data.get('password'):
+            return jsonify({"error": "username and password are required"}), 400
 
-#         user = service.verify_user(data['username'], data['password'])
-#         if user:
-#             access_token = create_access_token(identity=user['username'])  # إنشاء token
-#             return jsonify({"access_token": access_token}), 200
-#         return jsonify({"error": "Invalid username or password"}), 401
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
+        user = service.verify_user(data['username'], data['password'])
+        if user:
+            access_token = create_access_token(identity=user['username'])  # إنشاء token
+            return jsonify({"access_token": access_token}), 200
+        return jsonify({"error": "Invalid username or password"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
