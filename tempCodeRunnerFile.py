@@ -1,1 +1,2 @@
-#app.register_blueprint(devices_bp)
+.register_blueprint(courses_bp)
+app

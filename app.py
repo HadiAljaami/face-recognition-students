@@ -24,9 +24,11 @@ from routes.academic.academic_years_routes import years_bp
 from routes.academic.semesters_routes import semesters_bp
 from routes.academic.courses_routes import courses_bp
 from routes.academic.exams_routes import exams_bp
+from routes.academic.exam_distribution_router import exam_distribution_bp
 # -----------monitoring----------------------
 from routes.monitoring.alert_type_routes import alert_type_bp
 from routes.monitoring.alert_routes import alert_bp
+
 #-----------------------------------------------
 
 app = Flask(__name__)
@@ -58,7 +60,7 @@ app.register_blueprint(years_bp)
 app.register_blueprint(semesters_bp)
 app.register_blueprint(courses_bp)
 app.register_blueprint(exams_bp)
-
+app.register_blueprint(exam_distribution_bp)
 init_app(app)# for all time and date 
 #-----------------monitoring--------------------------
 
