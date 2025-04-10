@@ -1,7 +1,7 @@
 # routes/users_routes.py
 from flask import Blueprint, request, jsonify
 from services.users_service import UsersService
-#from flask_jwt_extended import create_access_token # dont delete !!!
+from flask_jwt_extended import create_access_token # dont delete !!!
 
 users_bp = Blueprint('users', __name__)
 service = UsersService()

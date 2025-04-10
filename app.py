@@ -1,7 +1,10 @@
 from flask import Flask, redirect, url_for
 from flasgger import Swagger
 from flask_cors import CORS
-#from flask_jwt_extended import JWTManager # dont delete !!!
+from flask_jwt_extended import JWTManager # dont delete !!!
+from datetime import timedelta
+# import secrets
+# print(secrets.token_hex(32)) # this is to create  JWT_SECRET_KEY in line # 70
 
 from routes.students_routes import students_bp
 from routes.vectors_routes import vectors_routes  # استيراد المسارات الجديدة
@@ -64,8 +67,9 @@ app.register_blueprint(alert_bp)
 #------------------------------------------
 #----------don't delete----------------------
 # # JWT Configuration
-# app.config["JWT_SECRET_KEY"] = "super-secret-key"  # تغيير هذا المفتاح في البيئة الإنتاجية
-# jwt = JWTManager(app)
+app.config["JWT_SECRET_KEY"] = "9a41d4bba2dc946aef73bb59669e0bc53527c3eb107af5efaafbd77c5619da11"  # تغيير هذا المفتاح في البيئة الإنتاجية
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
+jwt = JWTManager(app)
 #-------------------------------------------
 
 # إضافة مسار الصفحة الرئيسية
