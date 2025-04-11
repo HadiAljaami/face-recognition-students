@@ -3,7 +3,11 @@ from services.vectors_service import VectorsService
 from services.image_processor import ImageProcessor
 from services.students_service import fetch_student_info_by_number,fetch_students_by_ids
 from database.vectors_repository import VectorsRepository
+from datetime import datetime, timedelta
 import os
+from database.connection import get_db_connection
+from psycopg.rows import dict_row 
+from psycopg import sql
 
 vectors_routes = Blueprint("vectors_routes", __name__)
 
@@ -292,12 +296,50 @@ def search_vectors():
                 "ImagePath": student[7]  # Image path
             })
 
+        # الحصول على الوقت الحالي من السيرفر
+        current_datetime = datetime.now()
+
         # Update student data by adding new fields
         for result in results:
             student_id = result["student_id"]
             # Find the student data in students_dicts
             student_info = next((student for student in students_dicts if str(student["Number"]) == student_id), None)
             if student_info:
+                exam_distribution_data = get_exam_distribution_by_student(student_id)
+                if exam_distribution_data:
+                    exam_id = exam_distribution_data.get("exam_id")
+                    exam_data = get_exam_data(exam_id)
+                    if exam_data:
+                        # استخراج تاريخ الاختبار ووقت بداية الاختبار
+                        exam_date_str = exam_data.get("exam_date")
+                        exam_start_time_str = exam_data.get("exam_start_time")
+                        
+                        # دمج التاريخ والوقت لتكوين كائن datetime
+                        exam_datetime_str = f"{exam_date_str} {exam_start_time_str}"
+                        exam_datetime = datetime.strptime(exam_datetime_str, "%Y-%m-%d %H:%M:%S")
+                        
+                        # تحديد النافذة الزمنية:
+                        # صالح إذا كان الوقت الحالي بين (exam_start_time - 30 دقيقة) وبين (exam_start_time + 60 دقيقة)
+                        valid_start = exam_datetime - timedelta(minutes=30)
+                        valid_end = exam_datetime + timedelta(minutes=60)
+
+                        # فحص صلاحية الوقت: كما يجب التأكد من أن تاريخ الاختبار يطابق تاريخ اليوم
+                        is_date_match = (exam_datetime.date() == current_datetime.date())
+                        is_time_valid = valid_start <= current_datetime <= valid_end
+                        # إضافة بيانات الاختبار إلى الطالب
+                        student_info["exam_distribution"] = exam_distribution_data
+                        student_info["exam_data"] = exam_data
+                        student_info["isExamTimeValid"] = is_date_match and is_time_valid
+                        student_info["time_window"] = {
+                            "valid_start": valid_start.strftime("%Y-%m-%d %H:%M:%S"),
+                            "valid_end": valid_end.strftime("%Y-%m-%d %H:%M:%S"),
+                            "current_time": current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                    else:
+                        student_info["exam_error"] = "No exam data found."
+                else:
+                    student_info["exam_distribution_error"] = "No exam distribution data found."
+
                 # Add new fields to the student data
                 student_info["created_at"] = result["created_at"]
                 student_info["similarity"] = result["similarity"]
@@ -407,135 +449,61 @@ def search_vectors_by_college():
         return jsonify({"error": str(e)}), 500
 
 
-# @vectors_routes.route("/vectors/search-by-college", methods=["POST"])
-# def search_vectors_by_college():
-#     """
-#     البحث عن متجهات مشابهة باستخدام صورة والكلية
-#     ---
-#     tags:
-#       - Vectors
-#     parameters:
-#       - name: image
-#         in: formData
-#         type: file
-#         required: true
-#         description: صورة الوجه للبحث
-#       - name: college
-#         in: formData
-#         type: string
-#         required: true
-#         description: الكلية للبحث داخلها
-#       - name: threshold
-#         in: formData
-#         type: number
-#         required: true
-#         description: العتبة لتحديد التشابه
-#       - name: limit
-#         in: formData
-#         type: integer
-#         required: true
-#         description: عدد النواتج المطلوبة
-#     responses:
-#       200:
-#         description: نتائج البحث
-#       400:
-#         description: خطأ في الإدخال
-#       500:
-#         description: خطأ في السيرفر
-#     """
-#     try:
-#         # استلام البيانات من الطلب
-#         if "image" not in request.files:
-#             return jsonify({"error": "Image file is required."}), 400
+# دالة لجلب بيانات توزيع الاختبار (مثال)
+def get_exam_distribution_by_student(student_id: str) -> dict:
+    query = sql.SQL("""
+        SELECT id, student_id, student_name, exam_id, device_id, assigned_at
+        FROM exam_distribution
+        WHERE student_id = %s
+        LIMIT 1
+    """)
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                cursor.execute(query, (student_id,))
+                row = cursor.fetchone()
+                if row:
+                    return row  # row يكون من نوع dict بالفعل
+    except Exception as ex:
+        print(f"Error fetching exam distribution: {ex}")
+    return {}
 
-#         image_file = request.files["image"]
-#         college = request.form.get("college")
-#         threshold = request.form.get("threshold", type=float)
-#         limit = request.form.get("limit", type=int)
+# دالة لجلب بيانات الاختبار من جدول الاختبارات باستخدام exam_id
+def get_exam_data(exam_id: int) -> dict:
+    query = """
+        SELECT exam_date, exam_start_time, exam_end_time, college_id, course_id,
+               level_id, major_id, semester_id, year_id
+        FROM Exams
+        WHERE exam_id = %s
+        LIMIT 1
+    """
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(query, (exam_id,))
+                # بما أن نتيجة الاستعلام بالفعل عبارة عن dict (كما يظهر في print(row))
+                row = cursor.fetchone()
+                if row:
+                    # استخدام المفاتيح مباشرةً بدلاً من الفهارس
+                    exam_date = row.get("exam_date")
+                    exam_start_time = row.get("exam_start_time")
+                    exam_end_time = row.get("exam_end_time")
+                    
+                    exam_date_str = exam_date.strftime("%Y-%m-%d") if hasattr(exam_date, "strftime") else exam_date
+                    exam_start_time_str = exam_start_time.strftime("%H:%M:%S") if hasattr(exam_start_time, "strftime") else exam_start_time
+                    exam_end_time_str = exam_end_time.strftime("%H:%M:%S") if hasattr(exam_end_time, "strftime") else exam_end_time
 
-#         if not college or threshold is None or limit is None:
-#             return jsonify({"error": "College, threshold, and limit are required."}), 400
-
-#         # حفظ الصورة مؤقتًا
-#         filename = ImageProcessor.secure_filename(image_file.filename)
-#         temp_path = os.path.join(UPLOAD_FOLDER, filename)
-#         image_file.save(temp_path)
-
-#         # تحويل الصورة إلى متجه
-#         query_vector = ImageProcessor.convert_image_to_vector(temp_path)
-
-#         # البحث عن المتجهات المشابهة داخل الكلية
-#         results = service.search_vectors_by_college(query_vector, college, threshold, limit)
-
-#         # حذف الصورة المؤقتة
-#         os.remove(temp_path)
-
-#         return jsonify({"results": results}), 200
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-
-# @vectors_routes.route("/vectors/search", methods=["POST"])
-# def search_vectors():
-#     """
-#     البحث عن متجهات مشابهة باستخدام صورة
-#     ---
-#     tags:
-#       - Vectors
-#     parameters:
-#       - name: image
-#         in: formData
-#         type: file
-#         required: true
-#         description: صورة الوجه للبحث
-#       - name: threshold
-#         in: formData
-#         type: number
-#         required: true
-#         description: العتبة لتحديد التشابه
-#       - name: limit
-#         in: formData
-#         type: integer
-#         required: true
-#         description: عدد النواتج المطلوبة
-#     responses:
-#       200:
-#         description: نتائج البحث
-#       400:
-#         description: خطأ في الإدخال
-#       500:
-#         description: خطأ في السيرفر
-#     """
-#     try:
-#         # استلام البيانات من الطلب
-#         if "image" not in request.files:
-#             return jsonify({"error": "Image file is required."}), 400
-
-#         image_file = request.files["image"]
-#         threshold = request.form.get("threshold", type=float)
-#         limit = request.form.get("limit", type=int)
-
-#         if threshold is None or limit is None:
-#             return jsonify({"error": "Threshold and limit are required."}), 400
-
-#         # حفظ الصورة مؤقتًا
-#         filename = ImageProcessor.secure_filename(image_file.filename)
-#         temp_path = os.path.join(UPLOAD_FOLDER, filename)
-#         image_file.save(temp_path)
-
-#         # تحويل الصورة إلى متجه
-#         query_vector = ImageProcessor.convert_image_to_vector(temp_path)
-        
-#         # print("hello")
-#         # البحث عن المتجهات المشابهة
-#         results = service.find_similar_vectors(query_vector, threshold, limit)
-
-#         # حذف الصورة المؤقتة
-#         # print("hello")
-#         os.remove(temp_path)
-
-#         return jsonify({"results": results}), 200
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
+                    return {
+                        "exam_date": exam_date_str,
+                        "exam_start_time": exam_start_time_str,
+                        "exam_end_time": exam_end_time_str,
+                        "college_id": row.get("college_id"),
+                        "course_id": row.get("course_id"),
+                        "level_id": row.get("level_id"),
+                        "major_id": row.get("major_id"),
+                        "semester_id": row.get("semester_id"),
+                        "year_id": row.get("year_id")
+                    }
+    except Exception as ex:
+        print(f"Error fetching exam data: {ex}")
+    return {}

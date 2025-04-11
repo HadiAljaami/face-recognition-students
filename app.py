@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, jsonify
 from flasgger import Swagger
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager # dont delete !!!
@@ -82,6 +82,10 @@ jwt = JWTManager(app)
 def home():
     # توجيه المستخدم تلقائيًا إلى صفحة التوثيق
     return redirect(url_for('flasgger.apidocs'))
+    
+@app.route('/api/ping', methods=['GET'])
+def ping():
+    return jsonify({'message': 'pong'}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
