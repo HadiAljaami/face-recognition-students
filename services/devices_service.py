@@ -33,6 +33,7 @@ class DevicesService:
     def get_device_by_number(self, device_number: int) -> Optional[Dict]:
         """الحصول على جهاز بواسطة رقم الجهاز"""
         return self.repository.get_device_by_number(device_number)
+    
     def get_device_by_id(self, device_id: int) -> Optional[Dict]:
         """الحصول على جهاز بواسطة رقم الجهاز"""
         return self.repository.get_device_by_id(device_id)
