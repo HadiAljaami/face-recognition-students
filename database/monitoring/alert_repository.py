@@ -44,7 +44,6 @@ class AlertRepository:
             COUNT(a.alert_id) AS alert_count,
             SUM(CASE WHEN a.is_read = FALSE THEN 1 ELSE 0 END) AS unread_count,
             MAX(a.alert_timestamp) AS last_alert_time,
-            a.alert_id,
             a.student_id, 
             e.exam_id,
             e.exam_date, 
@@ -64,7 +63,7 @@ class AlertRepository:
         )
         GROUP BY 
             d.id, d.device_number, d.room_number, ec.center_name, 
-            d.status, a.student_id, a.alert_id, e.exam_id, e.exam_date, 
+            d.status, a.student_id,  e.exam_id, e.exam_date, 
             e.exam_start_time, e.exam_end_time
         ORDER BY last_alert_time DESC;
 
