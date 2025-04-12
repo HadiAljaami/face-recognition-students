@@ -4,13 +4,21 @@ from psycopg import sql, errors
 from datetime import datetime, date, time
 
 class ExamDistributionRepository:
+
     def assign_exam_to_student(self, student_id: str, student_name: str, exam_id: int, device_id: int = None) -> Dict:
-        """Assign an exam to a student with optional device assignment"""
+        """Assign an exam to a student with optional device assignment (insert or update)"""
         query = sql.SQL("""
-        WITH inserted_distribution AS (
+        WITH upserted_distribution AS (
             INSERT INTO exam_distribution (student_id, student_name, exam_id, device_id)
             VALUES (%s, %s, %s, %s)
-            RETURNING id, student_id, student_name, exam_id, device_id, assigned_at
+            ON CONFLICT (student_id)
+            DO UPDATE SET 
+                student_name = EXCLUDED.student_name,
+                exam_id = EXCLUDED.exam_id,
+                device_id = EXCLUDED.device_id,
+                assigned_at = CURRENT_TIMESTAMP
+            RETURNING id, student_id, student_name, exam_id, device_id, assigned_at, xmax
+
         )
         SELECT 
             d.id,
@@ -29,8 +37,9 @@ class ExamDistributionRepository:
             d.device_id,
             dev.center_id,
             cen.center_name,
-            d.assigned_at
-        FROM inserted_distribution d
+            d.assigned_at,
+            d.xmax
+        FROM upserted_distribution d
         JOIN Exams e ON d.exam_id = e.exam_id
         JOIN Courses c ON e.course_id = c.course_id
         JOIN Majors m ON e.major_id = m.major_id
@@ -41,8 +50,9 @@ class ExamDistributionRepository:
         LEFT JOIN devices dev ON d.device_id = dev.id
         LEFT JOIN exam_centers cen ON dev.center_id = cen.id
         """)
-        
+       
         try:
+
             with get_db_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(query, (student_id, student_name, exam_id, device_id))
@@ -51,19 +61,96 @@ class ExamDistributionRepository:
                     
                     if not result:
                         return None
+                       
+                    action = "insert" if result["xmax"] == 0 else "update"
                     
-                    # تحويل أنواع التاريخ والوقت إلى strings
+
+                    result.pop("xmax")  # Remove internal field
+                    result["action"] = action
+
+                    # Convert datetime values to string
                     for key, value in result.items():
                         if isinstance(value, (date, time, datetime)):
                             result[key] = value.isoformat()
 
                     return result
-        except errors.UniqueViolation:
-            raise ValueError("This exam is already assigned to the student")
+
         except errors.ForeignKeyViolation as e:
-            raise ValueError(f"Invalid reference: {str(e)}")
+            error_msg = str(e)
+            if 'exam_distribution_device_id_fkey' in error_msg:
+                raise ValueError("Device not found.")
+            elif 'exam_distribution_exam_id_fkey' in error_msg:
+                raise ValueError("Exam not found.")
+            else:
+                raise ValueError("Invalid reference.")
         except errors.Error as e:
             raise RuntimeError(f"Database error: {str(e)}")
+
+    # def assign_exam_to_student(self, student_id: str, student_name: str, exam_id: int, device_id: int = None) -> Dict:
+    #     """Assign an exam to a student with optional device assignment"""
+    #     query = sql.SQL("""
+    #     WITH upserted_distribution AS (
+    #         INSERT INTO exam_distribution (student_id, student_name, exam_id, device_id)
+    #         VALUES (%s, %s, %s, %s)
+    #         ON CONFLICT (student_id)
+    #         DO UPDATE SET 
+    #             student_name = EXCLUDED.student_name,
+    #             device_id = EXCLUDED.device_id,
+    #             assigned_at = CURRENT_TIMESTAMP
+    #         RETURNING id, student_id, student_name, exam_id, device_id, assigned_at
+    #     )
+    #     SELECT 
+    #         d.id,
+    #         d.student_id,
+    #         d.student_name,
+    #         d.exam_id,
+    #         e.exam_date,
+    #         e.exam_start_time,
+    #         e.exam_end_time,
+    #         c.name AS course_name,
+    #         m.name AS major_name,
+    #         col.name AS college_name,
+    #         l.level_name,
+    #         ay.year_name,
+    #         s.semester_name,
+    #         d.device_id,
+    #         dev.center_id,
+    #         cen.center_name,
+    #         d.assigned_at
+    #     FROM inserted_distribution d
+    #     JOIN Exams e ON d.exam_id = e.exam_id
+    #     JOIN Courses c ON e.course_id = c.course_id
+    #     JOIN Majors m ON e.major_id = m.major_id
+    #     JOIN Colleges col ON e.college_id = col.college_id
+    #     JOIN Levels l ON e.level_id = l.level_id
+    #     JOIN Academic_Years ay ON e.year_id = ay.year_id
+    #     JOIN Semesters s ON e.semester_id = s.semester_id
+    #     LEFT JOIN devices dev ON d.device_id = dev.id
+    #     LEFT JOIN exam_centers cen ON dev.center_id = cen.id
+    #     """)
+        
+    #     try:
+    #         with get_db_connection() as conn:
+    #             with conn.cursor() as cursor:
+    #                 cursor.execute(query, (student_id, student_name, exam_id, device_id))
+    #                 result = cursor.fetchone()
+    #                 conn.commit()
+                    
+    #                 if not result:
+    #                     return None
+                    
+    #                 # تحويل أنواع التاريخ والوقت إلى strings
+    #                 for key, value in result.items():
+    #                     if isinstance(value, (date, time, datetime)):
+    #                         result[key] = value.isoformat()
+
+    #                 return result
+    #     except errors.UniqueViolation:
+    #         raise ValueError("This student already has an assigned exam.")
+    #     except errors.ForeignKeyViolation as e:
+    #         raise ValueError(f"Invalid reference: {str(e)}")
+    #     except errors.Error as e:
+    #         raise RuntimeError(f"Database error: {str(e)}")
 
     def update_exam_distribution(self, distribution_id: int, student_name: str = None, 
                                exam_id: int = None, device_id: int = None) -> Optional[Dict]:

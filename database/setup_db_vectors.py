@@ -252,7 +252,7 @@ def create_exam_distribution_table():
             exam_id INTEGER REFERENCES Exams(exam_id) ON DELETE SET NULL,
             device_id INTEGER REFERENCES devices(id) ON DELETE SET NULL,
             assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE (student_id, exam_id)
+            UNIQUE (student_id)
         );
         """
     )

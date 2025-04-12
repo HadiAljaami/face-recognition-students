@@ -7,6 +7,7 @@ class ExamDistributionService:
         self.repository = ExamDistributionRepository()
 
     def assign_exam_to_student(self, student_id: str, student_name: str, exam_id: int, device_id: int = None):
+        
         return self.repository.assign_exam_to_student(
             student_id=student_id,
             student_name=student_name,

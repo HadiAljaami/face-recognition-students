@@ -29,6 +29,8 @@ SWAGGER_TEMPLATE = {
 def merge_swagger(config):
     return {**config, **SWAGGER_TEMPLATE}
 
+
+
 @exam_distribution_bp.route('/', methods=['POST'])
 @swag_from({
     'tags': ['Exam Distributions'],
@@ -54,16 +56,22 @@ def merge_swagger(config):
             'schema': {
                 'type': 'object',
                 'properties': {
-                    'id': {'type': 'integer', 'example': 1},
-                    'student_id': {'type': 'string', 'example': '2023001'},
-                    'student_name': {'type': 'string', 'example': 'أحمد محمد'},
-                    'exam_id': {'type': 'integer', 'example': 1},
-                    'device_id': {'type': 'integer', 'example': 5},
-                    'exam_date': {'type': 'string', 'format': 'date', 'example': '2023-12-15'},
-                    'course_name': {'type': 'string', 'example': 'قواعد البيانات'},
-                    'major_name': {'type': 'string', 'example': 'علوم الحاسب'},
-                    'college_name': {'type': 'string', 'example': 'كلية الحوسبة'},
-                    'assigned_at': {'type': 'string', 'format': 'date-time'}
+                    'message': {'type': 'string', 'example': 'Student exam assignment inserted successfully'},
+                    'data': {
+                        'type': 'object',
+                        'properties': {
+                            'id': {'type': 'integer', 'example': 1},
+                            'student_id': {'type': 'string', 'example': '2023001'},
+                            'student_name': {'type': 'string', 'example': 'أحمد محمد'},
+                            'exam_id': {'type': 'integer', 'example': 1},
+                            'device_id': {'type': 'integer', 'example': 5},
+                            'exam_date': {'type': 'string', 'format': 'date', 'example': '2023-12-15'},
+                            'course_name': {'type': 'string', 'example': 'قواعد البيانات'},
+                            'major_name': {'type': 'string', 'example': 'علوم الحاسب'},
+                            'college_name': {'type': 'string', 'example': 'كلية الحوسبة'},
+                            'assigned_at': {'type': 'string', 'format': 'date-time'}
+                        }
+                    }
                 }
             }
         },
@@ -76,33 +84,120 @@ def merge_swagger(config):
 def assign_exam():
     data = request.get_json()
     try:
-        # التحقق من البيانات المطلوبة
+        # تحقق من الحقول المطلوبة
         if not all(k in data for k in ['student_id', 'student_name', 'exam_id']):
             return jsonify({'error': 'Missing required fields'}), 400
-            
+        
         result = service.assign_exam_to_student(
             student_id=data['student_id'],
             student_name=data['student_name'],
             exam_id=data['exam_id'],
             device_id=data.get('device_id')
         )
-        
+       
         if not result:
             return jsonify({'error': 'Failed to create distribution'}), 500
-        print (result)    
-        return jsonify(result), 201
-        
+
+        action_msg = 'inserted' if result.get('action') == 'insert' else 'updated'
+        result.pop('action', None)  # نحذف "action" لأنها داخلية
+
+        return jsonify({
+            'message': f'Student exam assignment {action_msg} successfully',
+            'data': result
+        }), 201
+
     except ValueError as e:
         error_msg = str(e)
+       
         if "already assigned" in error_msg:
             return jsonify({'error': error_msg}), 409
-        elif "Invalid reference" in error_msg:
-            return jsonify({'error': error_msg}), 404
+        elif "Device not found" in error_msg:
+            return jsonify({'error': "Device not found."}), 404
+        elif "Exam not found" in error_msg:
+            return jsonify({'error': "Exam not found."}), 404
         else:
             return jsonify({'error': error_msg}), 400
-            
+
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
+
+
+
+
+# @exam_distribution_bp.route('/', methods=['POST'])
+# @swag_from({
+#     'tags': ['Exam Distributions'],
+#     'description': 'Assign exam to student',
+#     'parameters': [{
+#         'name': 'body',
+#         'in': 'body',
+#         'required': True,
+#         'schema': {
+#             'type': 'object',
+#             'properties': {
+#                 'student_id': {'type': 'string', 'example': '2023001'},
+#                 'student_name': {'type': 'string', 'example': 'أحمد محمد'},
+#                 'exam_id': {'type': 'integer', 'example': 1},
+#                 'device_id': {'type': 'integer', 'example': 5}
+#             },
+#             'required': ['student_id', 'student_name', 'exam_id']
+#         }
+#     }],
+#     'responses': {
+#         201: {
+#             'description': 'Exam assigned',
+#             'schema': {
+#                 'type': 'object',
+#                 'properties': {
+#                     'id': {'type': 'integer', 'example': 1},
+#                     'student_id': {'type': 'string', 'example': '2023001'},
+#                     'student_name': {'type': 'string', 'example': 'أحمد محمد'},
+#                     'exam_id': {'type': 'integer', 'example': 1},
+#                     'device_id': {'type': 'integer', 'example': 5},
+#                     'exam_date': {'type': 'string', 'format': 'date', 'example': '2023-12-15'},
+#                     'course_name': {'type': 'string', 'example': 'قواعد البيانات'},
+#                     'major_name': {'type': 'string', 'example': 'علوم الحاسب'},
+#                     'college_name': {'type': 'string', 'example': 'كلية الحوسبة'},
+#                     'assigned_at': {'type': 'string', 'format': 'date-time'}
+#                 }
+#             }
+#         },
+#         400: {'description': 'Validation error'},
+#         404: {'description': 'Reference not found'},
+#         409: {'description': 'Exam already assigned'},
+#         500: {'description': 'Server error'}
+#     }
+# })
+# def assign_exam():
+#     data = request.get_json()
+#     try:
+#         # التحقق من البيانات المطلوبة
+#         if not all(k in data for k in ['student_id', 'student_name', 'exam_id']):
+#             return jsonify({'error': 'Missing required fields'}), 400
+            
+#         result = service.assign_exam_to_student(
+#             student_id=data['student_id'],
+#             student_name=data['student_name'],
+#             exam_id=data['exam_id'],
+#             device_id=data.get('device_id')
+#         )
+        
+#         if not result:
+#             return jsonify({'error': 'Failed to create distribution'}), 500
+#         print (result)    
+#         return jsonify(result), 201
+        
+#     except ValueError as e:
+#         error_msg = str(e)
+#         if "already assigned" in error_msg:
+#             return jsonify({'error': error_msg}), 409
+#         elif "Invalid reference" in error_msg:
+#             return jsonify({'error': error_msg}), 404
+#         else:
+#             return jsonify({'error': error_msg}), 400
+            
+#     except Exception as e:
+#         return jsonify({'error': 'Internal server error'}), 500
     
 @exam_distribution_bp.route('/batch-delete', methods=['DELETE'])
 @swag_from({
