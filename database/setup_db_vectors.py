@@ -448,6 +448,144 @@ def add_required_constraints():
     print("✅ Constraints setup completed")
 
 
+def create_model_config_table():
+    """
+    إنشاء جدول مبسط لتخزين إعدادات نموذج التعرف على الوجه والوضعيات
+    """
+    query_create_model_config = """
+    CREATE TABLE IF NOT EXISTS model_config (
+        id SERIAL PRIMARY KEY,
+        -- إعدادات Face Mesh
+        face_mesh_max_num_faces INTEGER DEFAULT 1,
+        face_mesh_refine_landmarks BOOLEAN DEFAULT TRUE,
+        face_mesh_min_detection_confidence NUMERIC(3,2) DEFAULT 0.7,
+        face_mesh_min_tracking_confidence NUMERIC(3,2) DEFAULT 0.7,
+        
+        -- إعدادات Pose Estimation
+        pose_model_complexity INTEGER DEFAULT 1,
+        pose_smooth_landmarks BOOLEAN DEFAULT TRUE,
+        pose_enable_segmentation BOOLEAN DEFAULT FALSE,
+        pose_smooth_segmentation BOOLEAN DEFAULT FALSE,
+        pose_min_detection_confidence NUMERIC(3,2) DEFAULT 0.7,
+        pose_min_tracking_confidence NUMERIC(3,2) DEFAULT 0.7,
+        
+        -- إعدادات الكاميرا
+        camera_width INTEGER DEFAULT 800,
+        camera_height INTEGER DEFAULT 600,
+        
+        -- عوامل تعديل مؤشر الانتباه
+        attention_decrement_factor INTEGER DEFAULT 5,
+        attention_increment_factor INTEGER DEFAULT 1,
+        no_face_decrement_factor INTEGER DEFAULT 3,
+        
+        -- إعدادات تنبيهات الرأس
+        head_down_threshold NUMERIC(3,2) DEFAULT 0.8,
+        head_lateral_threshold NUMERIC(3,2) DEFAULT 0.7,
+        head_duration INTEGER DEFAULT 3000,
+        head_enabled_down BOOLEAN DEFAULT TRUE,
+        head_enabled_left BOOLEAN DEFAULT FALSE,
+        head_enabled_right BOOLEAN DEFAULT FALSE,
+        head_detect_turn_only BOOLEAN DEFAULT TRUE,
+        
+        -- إعدادات تنبيهات الفم
+        mouth_threshold NUMERIC(4,3) DEFAULT 0.01,
+        mouth_duration INTEGER DEFAULT 10000,
+        mouth_enabled BOOLEAN DEFAULT TRUE,
+        
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- إنشاء دالة لتحديث updated_at تلقائياً
+    CREATE OR REPLACE FUNCTION update_model_config_timestamp()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        NEW.updated_at = NOW();
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    
+    -- إنشاء trigger لتفعيل الدالة
+    DROP TRIGGER IF EXISTS model_config_update_trigger ON model_config;
+    CREATE TRIGGER model_config_update_trigger
+    BEFORE UPDATE ON model_config
+    FOR EACH ROW EXECUTE FUNCTION update_model_config_timestamp();
+    """
+    
+    try:
+        execute_query(DB_URL, query_create_model_config)
+        print("Table 'model_config' created successfully with simplified structure.")
+    except Exception as e:
+        print(f"Error creating simplified model_config table: {e}")
+
+def seed_default_model_config():
+    """
+    Seed the database with default model configuration values
+    """
+    query_seed_data = """
+    -- Insert default configuration if table is empty
+    INSERT INTO model_config (
+        face_mesh_max_num_faces,
+        face_mesh_refine_landmarks,
+        face_mesh_min_detection_confidence,
+        face_mesh_min_tracking_confidence,
+        pose_model_complexity,
+        pose_smooth_landmarks,
+        pose_enable_segmentation,
+        pose_smooth_segmentation,
+        pose_min_detection_confidence,
+        pose_min_tracking_confidence,
+        camera_width,
+        camera_height,
+        attention_decrement_factor,
+        attention_increment_factor,
+        no_face_decrement_factor,
+        head_down_threshold,
+        head_lateral_threshold,
+        head_duration,
+        head_enabled_down,
+        head_enabled_left,
+        head_enabled_right,
+        head_detect_turn_only,
+        mouth_threshold,
+        mouth_duration,
+        mouth_enabled
+    )
+    SELECT 
+        1,                  -- face_mesh_max_num_faces
+        TRUE,               -- face_mesh_refine_landmarks
+        0.7,                -- face_mesh_min_detection_confidence
+        0.7,                -- face_mesh_min_tracking_confidence
+        1,                  -- pose_model_complexity
+        TRUE,               -- pose_smooth_landmarks
+        FALSE,              -- pose_enable_segmentation
+        FALSE,              -- pose_smooth_segmentation
+        0.7,                -- pose_min_detection_confidence
+        0.7,                -- pose_min_tracking_confidence
+        800,                -- camera_width
+        600,                -- camera_height
+        5,                  -- attention_decrement_factor
+        1,                  -- attention_increment_factor
+        3,                  -- no_face_decrement_factor
+        0.8,                -- head_down_threshold
+        0.7,                -- head_lateral_threshold
+        3000,               -- head_duration
+        TRUE,               -- head_enabled_down
+        FALSE,              -- head_enabled_left
+        FALSE,              -- head_enabled_right
+        TRUE,               -- head_detect_turn_only
+        0.01,               -- mouth_threshold
+        10000,              -- mouth_duration
+        TRUE                -- mouth_enabled
+    WHERE NOT EXISTS (
+        SELECT 1 FROM model_config
+    );
+    """
+    
+    try:
+        execute_query(DB_URL, query_seed_data)
+        print("Default model configuration seeded successfully.")
+    except Exception as e:
+        print(f"Error seeding default model config: {e}")        
 
 
 if __name__ == "__main__":
@@ -465,4 +603,6 @@ if __name__ == "__main__":
     # print("Database UNIQUE Constraints Setup")
     # print("="*50 + "\n")
     # add_required_constraints()
-    create_exam_distribution_table()
+    #create_exam_distribution_table()
+    create_model_config_table()
+    seed_default_model_config()

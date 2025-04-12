@@ -29,7 +29,7 @@ from routes.academic.exam_distribution_router import exam_distribution_bp
 from routes.monitoring.alert_type_routes import alert_type_bp
 from routes.monitoring.alert_routes import alert_bp
 from routes.monitoring.check_image_seat_student import identity_routes
-
+from routes.monitoring.model_config_routes import model_config_bp
 #-----------------------------------------------
 
 app = Flask(__name__)
@@ -68,6 +68,7 @@ init_app(app)# for all time and date
 app.register_blueprint(alert_type_bp)
 app.register_blueprint(alert_bp)
 app.register_blueprint(identity_routes)
+app.register_blueprint(model_config_bp )
 #------------------------------------------
 #----------don't delete----------------------
 # # JWT Configuration
