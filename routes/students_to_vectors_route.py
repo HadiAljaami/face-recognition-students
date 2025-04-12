@@ -71,7 +71,7 @@ def students_to_vectors():
 
         # التحقق من صحة المدخلات
         if not student_ids or not isinstance(student_ids, list):
-          print(student_ids)
+          #print(student_ids)
           return jsonify({"error": "Input must be a non-empty list of Student IDs"}), 400
 
         # معالجة الطلاب وتحويل الصور إلى فكتورز

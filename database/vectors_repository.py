@@ -125,6 +125,25 @@ class VectorsRepository:
             raise
 
 
+    def search_similar_vectors_by_studen_id(self, vector, studen_id, threshold=0.8):
+        """
+        البحث عن متجهات مشابهة عبر رقم الطالب  
+        """
+        try:#(vector <-> %s::vector) AS distance
+            query = """
+            SELECT id,student_id,college,created_at,  (1 - (vector <-> %s::vector)) * 100 AS similarity
+            FROM student_vectors
+            WHERE studen_id = %s AND (vector <-> %s::vector) <= %s;
+            """
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, (vector, studen_id, vector, threshold, limit))
+                    return cursor.fetchall()
+        except Exception as e:
+            print("Error searching similar vectors studen id:", e)
+            raise
+
+
 
 
 

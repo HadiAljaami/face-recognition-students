@@ -157,6 +157,77 @@ class ExamDistributionRepository:
                     return deleted_count
         except errors.Error as e:
             raise RuntimeError(f"Database error: {str(e)}")
+    
+    def get_student_by_id(self, student_id: str) -> Optional[Dict]:
+        """
+        البحث عن بيانات الطالب باستخدام رقم القيد
+        
+        Args:
+            student_id: رقم القيد الجامعي للطالب
+            
+        Returns:
+            قاموس يحتوي على بيانات الطالب أو None إذا لم يتم العثور عليه
+        """
+        query = sql.SQL("""
+        SELECT
+            ed.student_id,
+            ed.student_name,
+            d.device_number,
+            d.room_number,
+            ec.center_name,
+            e.exam_id,
+            e.exam_date,
+            e.exam_start_time,
+            e.exam_end_time,
+            c.name AS course_name,
+            col.name AS college_name,
+            m.name AS major_name,
+            l.level_name,
+            s.semester_name,
+            ay.year_name AS academic_year
+        FROM exam_distribution ed
+        JOIN devices d ON ed.device_id = d.id
+        JOIN exam_centers ec ON d.center_id = ec.id
+        JOIN Exams e ON ed.exam_id = e.exam_id
+        JOIN Courses c ON e.course_id = c.course_id
+        JOIN Colleges col ON e.college_id = col.college_id
+        JOIN Majors m ON e.major_id = m.major_id
+        JOIN Levels l ON e.level_id = l.level_id
+        JOIN Semesters s ON e.semester_id = s.semester_id
+        JOIN Academic_Years ay ON e.year_id = ay.year_id
+        WHERE ed.student_id = %s
+        LIMIT 1;
+        """)
+        
+
+#  with get_db_connection() as conn:
+#                 with conn.cursor() as cursor:
+#                     cursor.execute(query, (distribution_ids,))
+#                     deleted_count = len(cursor.fetchall())
+#                     conn.commit()
+#                     return deleted_count
+
+        try: 
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, (student_id,))
+                    result = cursor.fetchone()
+                    
+                    if not result:
+                        return None
+                    
+                    # تحويل أنواع التاريخ والوقت إلى strings
+                    if isinstance(result.get('exam_date'), date):
+                        result['exam_date'] = result['exam_date'].isoformat()
+                    if isinstance(result.get('exam_start_time'), time):
+                        result['exam_start_time'] = str(result['exam_start_time'])
+                    if isinstance(result.get('exam_end_time'), time):
+                        result['exam_end_time'] = str(result['exam_end_time'])
+                    
+                    return result
+            
+        except errors.Error as e:
+            raise RuntimeError(f"Database error: {str(e)}")
 
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------

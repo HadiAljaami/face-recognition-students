@@ -22,8 +22,7 @@ class VectorsService:
 
     def find_similar_vectors(self, vector, threshold=0.8,limit=1):
         # print("length:",len(vector))
-        # print("kind:", vector)
-
+        # print(type (vector) )
         return self.repository.search_similar_vectors(vector, threshold,limit)
 
     def search_vectors_by_college(self, vector, college, threshold=0.8,limit=1):

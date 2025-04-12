@@ -332,3 +332,105 @@ def get_exam_report(exam_id):
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
 
+
+@exam_distribution_bp.route('/student-info/<string:student_id>', methods=['GET'])
+@swag_from({
+    'tags': ['Exam Distributions'],
+    'description': 'Get complete student information including exam assignments',
+    'parameters': [{
+        'name': 'student_id',
+        'in': 'path',
+        'type': 'string',
+        'required': True,
+        'example': '2023001',
+        'description': 'University registration number'
+    }],
+    'responses': {
+        200: {
+            'description': 'Student information retrieved successfully',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean', 'example': True},
+                    'data': {
+                        'type': 'object',
+                        'properties': {
+                            'student_id': {'type': 'string', 'example': '2023001'},
+                            'student_name': {'type': 'string', 'example': 'John Doe'},
+                            'device_number': {'type': 'integer', 'example': 5},
+                            'room_number': {'type': 'string', 'example': 'A101'},
+                            'center_name': {'type': 'string', 'example': 'Main Exam Center'},
+                            'exam_info': {
+                                'type': 'object',
+                                'properties': {
+                                    'exam_id': {'type': 'integer', 'example': 1},
+                                    'exam_date': {'type': 'string', 'example': '2023-05-15'},
+                                    'exam_start_time': {'type': 'string', 'example': '09:00:00'},
+                                    'exam_end_time': {'type': 'string', 'example': '11:00:00'},
+                                    'course_name': {'type': 'string', 'example': 'Mathematics'}
+                                }
+                            },
+                            'academic_info': {
+                                'type': 'object',
+                                'properties': {
+                                    'college_name': {'type': 'string', 'example': 'College of Science'},
+                                    'major_name': {'type': 'string', 'example': 'Computer Science'},
+                                    'level_name': {'type': 'string', 'example': 'Third Year'},
+                                    'semester_name': {'type': 'string', 'example': 'Second Semester'},
+                                    'academic_year': {'type': 'string', 'example': '2022-2023'}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Invalid student ID format',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Valid student ID must be provided'}
+                }
+            }
+        },
+        404: {
+            'description': 'Student not found',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Student not found in the system'}
+                }
+            }
+        },
+        500: {
+            'description': 'Internal server error',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'Database operation failed'}
+                }
+            }
+        }
+    }
+})
+def get_student_information(student_id):
+    """
+    Retrieve complete student information including exam assignments and academic details
+    
+    This endpoint returns:
+    - Basic student information
+    - Device and room assignment details
+    - Exam schedule information
+    - Academic program details
+    """
+    try:
+        result = service.get_student_info(student_id)
+        return jsonify(result), 200
+    except ValueError as e:
+        error_msg = str(e)
+        if "not found" in error_msg.lower():
+            return jsonify({'error': error_msg}), 404
+        return jsonify({'error': error_msg}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

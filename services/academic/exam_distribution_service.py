@@ -52,6 +52,33 @@ class ExamDistributionService:
             except Exception as e:
                 raise RuntimeError(f"Service error: {str(e)}")
 
+
+
+    def get_student_info(self, student_id: str) -> Dict:
+        """
+        Get student information by ID
+        
+        Args:
+            student_id: University registration number
+            
+        Returns:
+            Dictionary containing student information
+            
+        Raises:
+            ValueError: For invalid input or student not found
+        """
+        if not student_id or not isinstance(student_id, str):
+            raise ValueError("Valid student ID must be provided")
+            
+        student_data = self.repository.get_student_by_id(student_id)
+        
+        if not student_data:
+            raise ValueError("Student not found in the system")
+            
+        return student_data
+
+
+
     # def get_exam_distribution_report(self, exam_id: int) -> List[Dict]:
     #     """
     #     Get exam distribution grouped by rooms

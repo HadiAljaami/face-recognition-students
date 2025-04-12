@@ -180,6 +180,7 @@ def get_all_vectors():
     """
     try:
         vectors = service.get_all_vectors()
+       
         return jsonify(vectors), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

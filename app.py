@@ -28,6 +28,7 @@ from routes.academic.exam_distribution_router import exam_distribution_bp
 # -----------monitoring----------------------
 from routes.monitoring.alert_type_routes import alert_type_bp
 from routes.monitoring.alert_routes import alert_bp
+from routes.monitoring.check_image_seat_student import identity_routes
 
 #-----------------------------------------------
 
@@ -66,6 +67,7 @@ init_app(app)# for all time and date
 
 app.register_blueprint(alert_type_bp)
 app.register_blueprint(alert_bp)
+app.register_blueprint(identity_routes)
 #------------------------------------------
 #----------don't delete----------------------
 # # JWT Configuration
