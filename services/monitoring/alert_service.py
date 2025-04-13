@@ -120,8 +120,7 @@ class AlertService:
                 
             except Exception as e:
                 raise Exception(f"Failed to retrieve statistics: {str(e)}")
-
-    
+ 
     def get_course_stats(
         self,
         college_id: int,
@@ -161,6 +160,20 @@ class AlertService:
             return self.alert_repo.delete(alert_ids)
         except Exception as e:
             raise Exception(f"Service error: {str(e)}")
+    
+    def delete_alerts_by_keys(self, keys: List[Dict]) -> int:
+        """
+        Call repository to delete alerts by list of (exam_id, student_id, device_id).
+        Returns number of deleted alerts.
+        """
+        if not keys:
+            raise ValueError("No alert keys provided for deletion")
+
+        try:
+            return self.alert_repo.delete_by_keys(keys)
+        except Exception as e:
+            raise Exception(f"Service error while deleting alerts: {str(e)}")
+
 
     # def get_alert_details(
     #     self,

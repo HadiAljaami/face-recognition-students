@@ -374,7 +374,32 @@ class AlertRepository:
                     return deleted
         except Exception as e:
             conn.rollback()
-         
+
+    def delete_multiple_alerts(self, alert_keys: List[Dict]) -> int:
+        """
+        Delete alerts for multiple (exam_id, student_id, device_id) combinations.
+        Returns number of deleted records.
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    total_deleted = 0
+                    for key in alert_keys:
+                        exam_id = key["exam_id"]
+                        student_id = key["student_id"]
+                        device_id = key["device_id"]
+
+                        cursor.execute(
+                            "DELETE FROM alerts WHERE exam_id = %s AND student_id = %s AND device_id = %s",
+                            (exam_id, student_id, device_id)
+                        )
+                        total_deleted += cursor.rowcount
+
+                    conn.commit()
+                    return total_deleted
+        except Exception as e:
+            raise RuntimeError(f"Failed to delete alerts: {str(e)}")
+
 #-----------------------------------------------------
 
     # def get_by_id(self, alert_id: int) -> Optional[Dict]:

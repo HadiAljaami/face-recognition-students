@@ -677,6 +677,54 @@ def delete_alerts():
         return jsonify({'error': str(e)}), 500
 
 
+@alert_bp.route('/delete-multiple', methods=['POST'])
+@swag_from({
+    'tags': ['Alerts'],
+    'summary': 'Delete multiple alerts by student, exam, and device',
+    'description': 'Delete all alert records matching multiple (exam_id, student_id, device_id) combinations',
+    'requestBody': {
+        'required': True,
+        'content': {
+            'application/json': {
+                'example': {
+                    "items": [
+                        {"exam_id": 101, "student_id": "S1", "device_id": 10},
+                        {"exam_id": 102, "student_id": "S2", "device_id": 11}
+                    ]
+                }
+            }
+        }
+    },
+    'responses': {
+        200: {
+            'description': 'Alerts deleted successfully'
+        },
+        400: {
+            'description': 'Invalid input'
+        },
+        500: {
+            'description': 'Internal server error'
+        }
+    }
+})
+@alert_bp.route('/delete-multiple', methods=['POST'])
+def delete_multiple_alerts():
+    data = request.get_json()
+
+    if not data or "items" not in data:
+        return jsonify({"error": "Missing 'items' list"}), 400
+
+    try:
+        deleted_count = service.delete_multiple_alerts(data["items"])
+        return jsonify({
+            "message": f"{deleted_count} alert(s) deleted successfully"
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 # او استخدام get  في التعديل وجلب البيانات 
 # @alert_bp.route('/alerts/mark-and-get', methods=['GET'])
 # @swag_from({
