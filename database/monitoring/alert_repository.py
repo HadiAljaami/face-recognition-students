@@ -388,7 +388,10 @@ class AlertRepository:
                         exam_id = key["exam_id"]
                         student_id = key["student_id"]
                         device_id = key["device_id"]
-
+                        print(exam_id)
+                        print(student_id)
+                        print(device_id)
+                        print('--------')
                         cursor.execute(
                             "DELETE FROM alerts WHERE exam_id = %s AND student_id = %s AND device_id = %s",
                             (exam_id, student_id, device_id)

@@ -680,34 +680,57 @@ def delete_alerts():
 @alert_bp.route('/delete-multiple', methods=['POST'])
 @swag_from({
     'tags': ['Alerts'],
-    'summary': 'Delete multiple alerts by student, exam, and device',
-    'description': 'Delete all alert records matching multiple (exam_id, student_id, device_id) combinations',
-    'requestBody': {
+    'description': 'Delete multiple alerts by student, exam, and device.',
+    'parameters': [{
+        'name': 'body',
+        'in': 'body',
         'required': True,
-        'content': {
-            'application/json': {
-                'example': {
-                    "items": [
-                        {"exam_id": 101, "student_id": "S1", "device_id": 10},
-                        {"exam_id": 102, "student_id": "S2", "device_id": 11}
-                    ]
+        'schema': {
+            'type': 'object',
+            'properties': {
+                'items': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'exam_id': {'type': 'integer', 'example': 101},
+                            'student_id': {'type': 'string', 'example': 'S1'},
+                            'device_id': {'type': 'integer', 'example': 10}
+                        },
+                        'required': ['exam_id', 'student_id', 'device_id']
+                    }
+                }
+            },
+            'required': ['items']
+        }
+    }],
+    'responses': {
+        200: {
+            'description': 'Alerts deleted successfully',
+            'examples': {
+                'application/json': {
+                    'message': '3 alerts deleted'
+                }
+            }
+        },
+        400: {
+            'description': 'Invalid input',
+            'examples': {
+                'application/json': {
+                    'error': 'No alert keys provided for deletion'
+                }
+            }
+        },
+        500: {
+            'description': 'Internal server error',
+            'examples': {
+                'application/json': {
+                    'error': 'Service error while deleting alerts: ...'
                 }
             }
         }
-    },
-    'responses': {
-        200: {
-            'description': 'Alerts deleted successfully'
-        },
-        400: {
-            'description': 'Invalid input'
-        },
-        500: {
-            'description': 'Internal server error'
-        }
     }
 })
-@alert_bp.route('/delete-multiple', methods=['POST'])
 def delete_multiple_alerts():
     data = request.get_json()
 
