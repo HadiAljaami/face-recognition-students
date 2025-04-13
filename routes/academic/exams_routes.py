@@ -525,6 +525,67 @@ def get_exam_dates():
  # def serialize_exam(exam):
 
 
+@exams_bp.route('/<int:exam_id>', methods=['GET'])
+@swag_from({
+    'tags': ['Academic - Exams'],
+    'summary': 'Get exam by ID',
+    'description': 'Retrieve a single exam by its exam_id',
+    'parameters': [
+        {
+            'name': 'exam_id',
+            'in': 'path',
+            'required': True,
+            'description': 'ID of the exam to retrieve',
+            'schema': {'type': 'integer', 'example': 101}
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Exam details',
+            'content': {
+                'application/json': {
+                    'example': {
+                        'exam_id': 1,
+                        'course_id': 1,
+                        'major_id': 2,
+                        'college_id': 3,
+                        'level_id': 1,
+                        'year_id': 2023,
+                        'semester_id': 1,
+                        'exam_date': '2023-12-15',
+                        'exam_start_time': '09:00:00',
+                        'exam_end_time': '11:00:00',
+                        'created_at': '2023-10-10T08:00:00'
+                    }
+                }
+            }
+        },
+        404: {'description': 'Exam not found'},
+        500: {'description': 'Server error'}
+    }
+})
+def get_exam_by_id(exam_id):
+    try:
+        exam = service.get_exam_by_id(exam_id)
+
+        # Convert date/time fields to ISO format
+        if 'exam_date' in exam and hasattr(exam['exam_date'], 'isoformat'):
+            exam['exam_date'] = exam['exam_date'].isoformat()
+        if 'exam_start_time' in exam and hasattr(exam['exam_start_time'], 'isoformat'):
+            exam['exam_start_time'] = exam['exam_start_time'].isoformat()
+        if 'exam_end_time' in exam and hasattr(exam['exam_end_time'], 'isoformat'):
+            exam['exam_end_time'] = exam['exam_end_time'].isoformat()
+        if 'created_at' in exam and hasattr(exam['created_at'], 'isoformat'):
+            exam['created_at'] = exam['created_at'].isoformat()
+
+        return jsonify(exam), 200
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 #     """Convert exam object to JSON-serializable dictionary"""
 #     if exam is None:
 #         return None
