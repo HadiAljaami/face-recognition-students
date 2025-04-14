@@ -6,3 +6,5 @@ logging
 psycopg3
 pgvector
 flask-jwt-extended
+pandas
+openpyxl
