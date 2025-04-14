@@ -677,6 +677,77 @@ def delete_alerts():
         return jsonify({'error': str(e)}), 500
 
 
+@alert_bp.route('/delete-multiple', methods=['POST'])
+@swag_from({
+    'tags': ['Alerts'],
+    'description': 'Delete multiple alerts by student, exam, and device.',
+    'parameters': [{
+        'name': 'body',
+        'in': 'body',
+        'required': True,
+        'schema': {
+            'type': 'object',
+            'properties': {
+                'items': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'exam_id': {'type': 'integer', 'example': 101},
+                            'student_id': {'type': 'string', 'example': 'S1'},
+                            'device_id': {'type': 'integer', 'example': 10}
+                        },
+                        'required': ['exam_id', 'student_id', 'device_id']
+                    }
+                }
+            },
+            'required': ['items']
+        }
+    }],
+    'responses': {
+        200: {
+            'description': 'Alerts deleted successfully',
+            'examples': {
+                'application/json': {
+                    'message': '3 alerts deleted'
+                }
+            }
+        },
+        400: {
+            'description': 'Invalid input',
+            'examples': {
+                'application/json': {
+                    'error': 'No alert keys provided for deletion'
+                }
+            }
+        },
+        500: {
+            'description': 'Internal server error',
+            'examples': {
+                'application/json': {
+                    'error': 'Service error while deleting alerts: ...'
+                }
+            }
+        }
+    }
+})
+def delete_multiple_alerts():
+    data = request.get_json()
+
+    if not data or "items" not in data:
+        return jsonify({"error": "Missing 'items' list"}), 400
+
+    try:
+        deleted_count = service.delete_multiple_alerts(data["items"])
+        return jsonify({
+            "message": f"{deleted_count} alert(s) deleted successfully"
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 # او استخدام get  في التعديل وجلب البيانات 
 # @alert_bp.route('/alerts/mark-and-get', methods=['GET'])
 # @swag_from({
