@@ -1,0 +1,321 @@
+@startuml
+
+
+class AcademicYearsRepository {
+    create_year()
+    get_all_years()
+    get_year_by_id()
+    update_year()
+    delete_year()
+
+}
+
+class CollegesRepository {
+    create_college()
+    get_college()
+    get_all_colleges()
+    update_college()
+    delete_college()
+
+}
+
+class CoursesRepository {
+    create_course()
+    get_all_courses()
+    get_course_by_id()
+    update_course()
+    delete_course()
+    search_courses_by_name()
+    filter_courses()
+
+}
+
+class ExamDistributionRepository {
+    assign_exam_to_student()
+    update_exam_distribution()
+    delete_multiple_distributions()
+    get_student_by_id()
+    get_exam_distribution_report()
+    _format_header()
+}
+
+class ExamsExcelRepository {
+    validate_exams_data()
+    bulk_create_exams()
+}
+
+class ExamsRepository {
+    create_exam()
+    get_exam_by_id()
+    delete_exams()
+    update_exam()
+    filter_exams()
+    get_exam_dates()
+    get_exam_time_slots()
+}
+
+class SemestersRepository {
+    create_semester()
+    get_all_semesters()
+    get_semester_by_id()
+    update_semester()
+    delete_semester()
+ 
+}
+
+class MajorsRepository {
+    create_major()
+    get_major()
+    get_majors_by_college()
+    update_major()
+    delete_major()
+
+}
+
+class LevelsRepository {
+    create_level()
+    get_level()
+    get_all_levels()
+    update_level()
+    delete_level()
+
+}
+'---------------------------------------'
+
+class AcademicYearsService {
+    create_year()
+    get_all_years()
+    get_year_by_id()
+    update_year()
+    delete_year()
+        repo
+    __init__()
+}
+
+class CollegesService {
+    create_college()
+    get_college()
+    get_all_colleges()
+    update_college()
+    delete_college()
+        repo
+    __init__()
+}
+
+class CoursesService {
+    create_course()
+    get_all_courses()
+    get_course_by_id()
+    update_course()
+    delete_course()
+    search_courses()
+    filter_courses()
+        repo
+    __init__()
+}
+
+class ExamDistributionService {
+    assign_exam_to_student()
+    update_exam_distribution()
+    delete_multiple_distributions()
+    get_exam_distribution_report()
+    get_student_info()
+    get_distribution_by_id()
+    filter_distributions()
+        repository
+    __init__()
+}
+
+class ExamsExcelService {
+    import_exams_from_excel()
+    _validate_file()
+    _validate_columns()
+    _prepare_exams_data()
+    _format_db_validation_errors()
+    _translate_db_error()
+    _convert_int()
+    _convert_date()
+    _convert_time()
+    _get_row_data()
+        repo
+    __init__()
+}
+
+class ExamsService {
+    create_exam()
+    update_exam()
+    _validate_exam_data()
+    filter_exams()
+    get_exam_time_slots()
+    get_exam_dates()
+    get_exam_by_id()
+        repo
+    __init__()
+}
+
+class LevelsService {
+    create_level()
+    get_level()
+    get_all_levels()
+    update_level()
+    delete_level()
+        repo
+    __init__()
+}
+
+class MajorsService {
+    create_major()
+    get_major()
+    get_majors_by_college()
+    update_major()
+    delete_major()
+        majors_repo
+    colleges_repo
+    __init__()
+}
+
+class SemestersService {
+    create_semester()
+    get_all_semesters()
+    get_semester_by_id()
+    update_semester()
+    delete_semester()
+        repo
+    __init__()
+}
+
+'--------------------------------------------'
+
+
+
+' ------ الكلاسات الأساسية (Repository و Service) ------ '
+' (تم الحفاظ على الكلاسات الموجودة كما هي)
+' ... [يظهر هنا كل كود Repository و Service الذي قدمته] ...
+
+' ------ كلاسات الراوت (Routes) ------ '
+class "AcademicYearsRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /years
+    + GET /years
+    + GET /years/{id}
+    + PUT /years/{id}
+    + DELETE /years/{id}
+}
+
+class "CollegesRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /colleges
+    + GET /colleges
+    + GET /colleges/{id}
+    + PUT /colleges/{id}
+    + DELETE /colleges/{id}
+}
+
+class "CoursesRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /courses
+    + GET /courses
+    + GET /courses/{id}
+    + PUT /courses/{id}
+    + DELETE /courses/{id}
+    + GET /courses/search
+    + GET /courses/filter
+}
+
+class "ExamDistributionRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /exam-distributions
+    + PUT /exam-distributions/{id}
+    + DELETE /exam-distributions
+    + GET /exam-distributions/report
+    + GET /exam-distributions/students/{id}
+}
+
+class "ExamsExcelRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /exams/import
+}
+
+class "ExamsRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /exams
+    + GET /exams/{id}
+    + DELETE /exams
+    + PUT /exams/{id}
+    + GET /exams/filter
+    + GET /exams/dates
+    + GET /exams/time-slots
+}
+
+class "LevelsRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /levels
+    + GET /levels/{id}
+    + GET /levels
+    + PUT /levels/{id}
+    + DELETE /levels/{id}
+}
+
+class "MajorsRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /majors
+    + GET /majors/{id}
+    + GET /majors
+    + PUT /majors/{id}
+    + DELETE /majors/{id}
+    + GET /colleges/{id}/majors
+}
+
+class "SemestersRoutes" << (R,lightblue) Route >> {
+    __Endpoints__
+    + POST /semesters
+    + GET /semesters
+    + GET /semesters/{id}
+    + PUT /semesters/{id}
+    + DELETE /semesters/{id}
+}
+
+' ------ العلاقات بين الكلاسات ------ '
+
+' العلاقات بين Services و Repositories
+AcademicYearsService --> AcademicYearsRepository
+CollegesService --> CollegesRepository
+CoursesService --> CoursesRepository
+ExamDistributionService --> ExamDistributionRepository
+ExamsExcelService --> ExamsExcelRepository
+ExamsService --> ExamsRepository
+LevelsService --> LevelsRepository
+MajorsService --> MajorsRepository
+SemestersService --> SemestersRepository
+
+' العلاقات بين Routes و Services
+AcademicYearsRoutes ..> AcademicYearsService : "invokes"
+CollegesRoutes ..> CollegesService : "invokes"
+CoursesRoutes ..> CoursesService : "invokes"
+ExamDistributionRoutes ..> ExamDistributionService : "invokes"
+ExamsExcelRoutes ..> ExamsExcelService : "invokes"
+ExamsRoutes ..> ExamsService : "invokes"
+LevelsRoutes ..> LevelsService : "invokes"
+MajorsRoutes ..> MajorsService : "invokes"
+SemestersRoutes ..> SemestersService : "invokes"
+
+' ------ الملاحظات التوضيحية ------ '
+note top of AcademicYearsRoutes
+  <<Route>>
+  URL Prefix: /api/academic/years
+  Uses Swagger for documentation
+end note
+
+note top of ExamsRoutes
+  <<Route>>
+  URL Prefix: /api/academic/exams
+  Supports filtering by date/time
+end note
+
+
+
+
+
+
+
+@enduml
