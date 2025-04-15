@@ -189,3 +189,15 @@ class VectorsRepository:
         #     except Exception as e:
         #         print("Error searching similar vectors in college:", e)
         #         raise
+
+    def get_all_student_ids(self):
+        try:
+            query = "SELECT student_id FROM student_vectors;"
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query)
+                    result = cursor.fetchall()
+                    return [row["student_id"] for row in result]
+        except Exception as e:
+            print("Error fetching student IDs:", e)
+            raise

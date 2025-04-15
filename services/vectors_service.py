@@ -16,6 +16,9 @@ class VectorsService:
 
     def get_all_vectors(self):
         return self.repository.get_all_vectors()
+    
+    def get_all_student_ids(self):
+        return self.repository.get_all_student_ids()
 
     def get_vector_by_id(self, student_id):
         return self.repository.get_vector_by_student_id(student_id)

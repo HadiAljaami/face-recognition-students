@@ -189,6 +189,25 @@ def get_all_vectors():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@vectors_routes.route("/vectors/all-student-ids", methods=["GET"])
+def get_all_student_ids():
+    """جلب جميع ارقام الطلاب
+    ---
+    tags:
+      - Vectors
+    responses:
+      200:
+        description: تم جلب جميع ارقام الطلاب بنجاح
+      500:
+        description: خطأ في السيرفر
+    """
+    try:
+        studenIds = service.get_all_student_ids()
+      
+        return jsonify(studenIds), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @vectors_routes.route("/vectors/<student_id>", methods=["DELETE"])
 def delete_vector(student_id):
