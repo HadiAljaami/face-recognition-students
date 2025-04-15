@@ -4,17 +4,16 @@ from services.monitoring.model_config_service import ModelConfigService
 
 model_config_bp = Blueprint('model_config', __name__, url_prefix='/api/model-config')
 
-# Initialize repository and service
-
+# إنشاء نسخة من الخدمة
 service = ModelConfigService()
 
 @model_config_bp.route('/', methods=['GET'])
 @swag_from({
     'tags': ['Model Config'],
-    'description': 'Get current model configuration',
+    'description': 'استرجاع الإعدادات الحالية للنموذج',
     'responses': {
         200: {
-            'description': 'Current configuration',
+            'description': 'الإعدادات الحالية',
             'examples': {
                 'application/json': {
                     "id": 1,
@@ -41,27 +40,41 @@ service = ModelConfigService()
                     "noFaceDecrementFactor": 3,
                     "alerts": {
                         "head": {
-                            "downThreshold": 0.8,
-                            "lateralThreshold": 0.7,
+                            "upThreshold": -0.5,
+                            "downThreshold": 0.5,
+                            "lateralThreshold": 15,
                             "duration": 3000,
                             "enabled": {
+                                "up": True,
                                 "down": True,
-                                "left": False,
-                                "right": False
+                                "left": True,
+                                "right": True,
+                                "forward": True
                             },
                             "detectTurnOnly": True
                         },
                         "mouth": {
-                            "threshold": 0.01,
-                            "duration": 10000,
+                            "threshold": 0.05,
+                            "duration": 3000,
                             "enabled": True
+                        },
+                        "gaze": {
+                            "duration": 3000,
+                            "enabled": True
+                        },
+                        "headPose": {
+                            "neutralRange": 5,
+                            "smoothingFrames": 10,
+                            "referenceFrames": 30
                         }
                     },
+                    "sendDataInterval": 5000,
+                    "maxAlerts": 10,
                     "updated_at": "2023-05-20T12:34:56.789Z"
                 }
             }
         },
-        500: {'description': 'Server error'}
+        500: {'description': 'خطأ في الخادم'}
     }
 })
 def get_config():
@@ -71,118 +84,22 @@ def get_config():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# @model_config_bp.route('/<int:config_id>', methods=['PUT'])
-# @swag_from({
-#     'tags': ['Model Config'],
-#     'description': 'Update model configuration',
-#     'parameters': [{
-#         'name': 'config_id',
-#         'in': 'path',
-#         'type': 'integer',
-#         'required': True
-#     }, {
-#         'name': 'body',
-#         'in': 'body',
-#         'required': True,
-#         'schema': {
-#             'type': 'object',
-#             'properties': {
-#                 'faceMeshOptions': {
-#                     'type': 'object',
-#                     'properties': {
-#                         'maxNumFaces': {'type': 'integer'},
-#                         'refineLandmarks': {'type': 'boolean'},
-#                         'minDetectionConfidence': {'type': 'number'},
-#                         'minTrackingConfidence': {'type': 'number'}
-#                     }
-#                 },
-#                 'poseOptions': {
-#                     'type': 'object',
-#                     'properties': {
-#                         'modelComplexity': {'type': 'integer'},
-#                         'smoothLandmarks': {'type': 'boolean'},
-#                         'enableSegmentation': {'type': 'boolean'},
-#                         'smoothSegmentation': {'type': 'boolean'},
-#                         'minDetectionConfidence': {'type': 'number'},
-#                         'minTrackingConfidence': {'type': 'number'}
-#                     }
-#                 },
-#                 'camera': {
-#                     'type': 'object',
-#                     'properties': {
-#                         'width': {'type': 'integer'},
-#                         'height': {'type': 'integer'}
-#                     }
-#                 },
-#                 'attentionDecrementFactor': {'type': 'integer'},
-#                 'attentionIncrementFactor': {'type': 'integer'},
-#                 'noFaceDecrementFactor': {'type': 'integer'},
-#                 'alerts': {
-#                     'type': 'object',
-#                     'properties': {
-#                         'head': {
-#                             'type': 'object',
-#                             'properties': {
-#                                 'downThreshold': {'type': 'number'},
-#                                 'lateralThreshold': {'type': 'number'},
-#                                 'duration': {'type': 'integer'},
-#                                 'enabled': {
-#                                     'type': 'object',
-#                                     'properties': {
-#                                         'down': {'type': 'boolean'},
-#                                         'left': {'type': 'boolean'},
-#                                         'right': {'type': 'boolean'}
-#                                     }
-#                                 },
-#                                 'detectTurnOnly': {'type': 'boolean'}
-#                             }
-#                         },
-#                         'mouth': {
-#                             'type': 'object',
-#                             'properties': {
-#                                 'threshold': {'type': 'number'},
-#                                 'duration': {'type': 'integer'},
-#                                 'enabled': {'type': 'boolean'}
-#                             }
-#                         }
-#                     }
-#                 }
-#             }
-#         }
-#     }],
-#     'responses': {
-#         200: {'description': 'Configuration updated successfully'},
-#         400: {'description': 'Invalid input'},
-#         500: {'description': 'Server error'}
-#     }
-# })
-
-# def update_config(config_id):
-#     try:
-#         data = request.get_json()
-#         service.update_config(config_id, data)
-#         return jsonify({"message": "Configuration updated successfully"}), 200
-#     except ValueError as e:
-#         return jsonify({"error": str(e)}), 400
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
 
 @model_config_bp.route('/<int:config_id>', methods=['PUT'])
 @swag_from({
     'tags': ['Model Config'],
-    'description': 'Update model configuration with new parameters',
+    'description': 'تحديث إعدادات النموذج مع المعطيات الجديدة',
     'parameters': [{
         'name': 'config_id',
         'in': 'path',
         'type': 'integer',
         'required': True,
-        'description': 'ID of the configuration to update'
+        'description': 'معرف الإعداد الذي سيتم تحديثه'
     }, {
         'name': 'body',
         'in': 'body',
         'required': True,
-        'description': 'Configuration object with updated values',
+        'description': 'كائن يحتوي على الإعدادات المحدّثة',
         'schema': {
             'type': 'object',
             'properties': {
@@ -194,29 +111,29 @@ def get_config():
                             'default': 1,
                             'minimum': 1,
                             'maximum': 10,
-                            'description': 'Maximum number of faces to detect'
+                            'description': 'أقصى عدد من الوجوه للكشف'
                         },
                         'refineLandmarks': {
                             'type': 'boolean',
                             'default': True,
-                            'description': 'Whether to refine face landmarks'
+                            'description': 'ما إذا كان يجب تحسين معالم الوجه'
                         },
                         'minDetectionConfidence': {
                             'type': 'number',
                             'default': 0.7,
                             'minimum': 0,
                             'maximum': 1,
-                            'description': 'Minimum confidence for face detection'
+                            'description': 'أدنى ثقة للكشف عن الوجه'
                         },
                         'minTrackingConfidence': {
                             'type': 'number',
                             'default': 0.7,
                             'minimum': 0,
                             'maximum': 1,
-                            'description': 'Minimum confidence for face tracking'
+                            'description': 'أدنى ثقة لتتبع الوجه'
                         }
                     },
-                    'description': 'Face mesh detection settings'
+                    'description': 'إعدادات كشف شبكة الوجه'
                 },
                 'poseOptions': {
                     'type': 'object',
@@ -226,39 +143,39 @@ def get_config():
                             'default': 1,
                             'minimum': 0,
                             'maximum': 2,
-                            'description': 'Pose model complexity (0=light, 1=full, 2=heavy)'
+                            'description': 'تعقيد نموذج الوضع (0=خفيف، 1=كامل، 2=ثقيل)'
                         },
                         'smoothLandmarks': {
                             'type': 'boolean',
                             'default': True,
-                            'description': 'Whether to smooth pose landmarks'
+                            'description': 'ما إذا كان يجب تنعيم معالم الوضع'
                         },
                         'enableSegmentation': {
                             'type': 'boolean',
                             'default': False,
-                            'description': 'Whether to enable segmentation'
+                            'description': 'ما إذا كان يجب تفعيل التجزئة'
                         },
                         'smoothSegmentation': {
                             'type': 'boolean',
                             'default': False,
-                            'description': 'Whether to smooth segmentation'
+                            'description': 'ما إذا كان يجب تنعيم التجزئة'
                         },
                         'minDetectionConfidence': {
                             'type': 'number',
                             'default': 0.7,
                             'minimum': 0,
                             'maximum': 1,
-                            'description': 'Minimum confidence for pose detection'
+                            'description': 'أدنى ثقة للكشف عن الوضع'
                         },
                         'minTrackingConfidence': {
                             'type': 'number',
                             'default': 0.7,
                             'minimum': 0,
                             'maximum': 1,
-                            'description': 'Minimum confidence for pose tracking'
+                            'description': 'أدنى ثقة لتتبع الوضع'
                         }
                     },
-                    'description': 'Pose estimation settings'
+                    'description': 'إعدادات تقدير الوضع'
                 },
                 'camera': {
                     'type': 'object',
@@ -268,35 +185,35 @@ def get_config():
                             'default': 800,
                             'minimum': 100,
                             'maximum': 4096,
-                            'description': 'Camera resolution width'
+                            'description': 'عرض الصورة من الكاميرا'
                         },
                         'height': {
                             'type': 'integer',
                             'default': 600,
                             'minimum': 100,
                             'maximum': 2160,
-                            'description': 'Camera resolution height'
+                            'description': 'ارتفاع الصورة من الكاميرا'
                         }
                     },
-                    'description': 'Camera settings'
+                    'description': 'إعدادات الكاميرا'
                 },
                 'attentionDecrementFactor': {
                     'type': 'integer',
                     'default': 5,
                     'minimum': 1,
-                    'description': 'Attention decrease factor when distracted'
+                    'description': 'عامل تقليل الانتباه عند تشتيت الانتباه'
                 },
                 'attentionIncrementFactor': {
                     'type': 'integer',
                     'default': 1,
                     'minimum': 1,
-                    'description': 'Attention increase factor when focused'
+                    'description': 'عامل زيادة الانتباه عند التركيز'
                 },
                 'noFaceDecrementFactor': {
                     'type': 'integer',
                     'default': 3,
                     'minimum': 1,
-                    'description': 'Attention decrease factor when no face detected'
+                    'description': 'عامل تقليل الانتباه عند عدم الكشف عن وجه'
                 },
                 'alerts': {
                     'type': 'object',
@@ -304,81 +221,148 @@ def get_config():
                         'head': {
                             'type': 'object',
                             'properties': {
+                                'upThreshold': {
+                                    'type': 'number',
+                                    'default': -0.5,
+                                    'minimum': -1,
+                                    'maximum': 1,
+                                    'description': 'عازل لالتقاط حركة الرأس للأعلى'
+                                },
                                 'downThreshold': {
                                     'type': 'number',
-                                    'default': 0.8,
-                                    'minimum': 0,
-                                    'maximum': 1,
-                                    'description': 'Threshold for head down detection'
+                                    'default': 0.5,
+                                    'minimum': 0.0,
+                                    'maximum': 1.0,
+                                    'description': 'عازل لحركة الرأس لأسفل'
                                 },
                                 'lateralThreshold': {
                                     'type': 'number',
-                                    'default': 0.7,
+                                    'default': 15,
                                     'minimum': 0,
-                                    'maximum': 1,
-                                    'description': 'Threshold for head turning detection'
+                                    'maximum': 180,
+                                    'description': 'عازل لحركة الرأس الجانبية'
                                 },
                                 'duration': {
                                     'type': 'integer',
                                     'default': 3000,
                                     'minimum': 100,
-                                    'description': 'Duration in ms before triggering alert'
+                                    'description': 'المدة (بـ ms) قبل إطلاق التنبيه'
                                 },
                                 'enabled': {
                                     'type': 'object',
                                     'properties': {
+                                        'up': {
+                                            'type': 'boolean',
+                                            'default': True,
+                                            'description': 'تفعيل تنبيه الحركة للأعلى'
+                                        },
                                         'down': {
                                             'type': 'boolean',
                                             'default': True,
-                                            'description': 'Enable head down alerts'
+                                            'description': 'تفعيل تنبيه الحركة لأسفل'
                                         },
                                         'left': {
                                             'type': 'boolean',
-                                            'default': False,
-                                            'description': 'Enable head left alerts'
+                                            'default': True,
+                                            'description': 'تفعيل تنبيه الحركة لليسار'
                                         },
                                         'right': {
                                             'type': 'boolean',
-                                            'default': False,
-                                            'description': 'Enable head right alerts'
+                                            'default': True,
+                                            'description': 'تفعيل تنبيه الحركة لليمين'
+                                        },
+                                        'forward': {
+                                            'type': 'boolean',
+                                            'default': True,
+                                            'description': 'تفعيل تنبيه الحركة للأمام'
                                         }
                                     },
-                                    'description': 'Enabled head alert directions'
+                                    'description': 'اتجاهات التنبيه المفعلة'
                                 },
                                 'detectTurnOnly': {
                                     'type': 'boolean',
                                     'default': True,
-                                    'description': 'Detect only turning movements'
+                                    'description': 'التقاط الحركة عند دوران الرأس فقط'
                                 }
                             },
-                            'description': 'Head movement alert settings'
+                            'description': 'إعدادات تنبيهات حركة الرأس'
                         },
                         'mouth': {
                             'type': 'object',
                             'properties': {
                                 'threshold': {
                                     'type': 'number',
-                                    'default': 0.01,
-                                    'minimum': 0,
-                                    'maximum': 1,
-                                    'description': 'Threshold for mouth opening detection'
+                                    'default': 0.05,
+                                    'minimum': -1.00,
+                                    'maximum': 1.00,
+                                    'description': 'عازل لكشف فتح الفم'
                                 },
                                 'duration': {
                                     'type': 'integer',
-                                    'default': 10000,
+                                    'default': 3000,
                                     'minimum': 100,
-                                    'description': 'Duration in ms before triggering alert'
+                                    'description': 'المدة (بـ ms) قبل إطلاق التنبيه'
                                 },
                                 'enabled': {
                                     'type': 'boolean',
                                     'default': True,
-                                    'description': 'Enable mouth opening alerts'
+                                    'description': 'تفعيل تنبيه فتح الفم'
                                 }
                             },
-                            'description': 'Mouth movement alert settings'
+                            'description': 'إعدادات تنبيهات حركة الفم'
+                        },
+                        'gaze': {
+                            'type': 'object',
+                            'properties': {
+                                'duration': {
+                                    'type': 'integer',
+                                    'default': 3000,
+                                    'minimum': 100,
+                                    'description': 'المدة (بـ ms) قبل إطلاق تنبيه نظرة العين'
+                                },
+                                'enabled': {
+                                    'type': 'boolean',
+                                    'default': True,
+                                    'description': 'تفعيل تنبيه نظرة العين'
+                                }
+                            },
+                            'description': 'إعدادات تنبيهات نظرة العين'
+                        },
+                        'headPose': {
+                            'type': 'object',
+                            'properties': {
+                                'neutralRange': {
+                                    'type': 'number',
+                                    'default': 5,
+                                    'description': 'النطاق المحايد لحركة الرأس'
+                                },
+                                'smoothingFrames': {
+                                    'type': 'integer',
+                                    'default': 10,
+                                    'description': 'عدد الإطارات لتنعيم الحركة'
+                                },
+                                'referenceFrames': {
+                                    'type': 'integer',
+                                    'default': 30,
+                                    'description': 'عدد الإطارات المرجعية'
+                                }
+                            },
+                            'description': 'إعدادات مؤشرات وضع الرأس'
                         }
                     },
-                    'description': 'Alert system settings'
+                    'description': 'إعدادات نظام التنبيهات'
+                },
+                'sendDataInterval': {
+                    'type': 'integer',
+                    'default': 5000,
+                    'minimum': 1000,
+                    'description': 'المدة (بـ ms) قبل إرسال البيانات إلى قاعدة البيانات'
+                },
+                'maxAlerts': {
+                    'type': 'integer',
+                    'default': 10,
+                    'minimum': 1,
+                    'description': 'العدد الأقصى للتنبيهات خلال هذه المدة'
                 }
             },
             'example': {
@@ -405,28 +389,42 @@ def get_config():
                 "noFaceDecrementFactor": 3,
                 "alerts": {
                     "head": {
-                        "downThreshold": 0.8,
-                        "lateralThreshold": 0.7,
+                        "upThreshold": -0.5,
+                        "downThreshold": 0.5,
+                        "lateralThreshold": 15,
                         "duration": 3000,
                         "enabled": {
+                            "up": True,
                             "down": True,
-                            "left": False,
-                            "right": False
+                            "left": True,
+                            "right": True,
+                            "forward": True
                         },
                         "detectTurnOnly": True
                     },
                     "mouth": {
-                        "threshold": 0.01,
-                        "duration": 10000,
+                        "threshold": 0.05,
+                        "duration": 3000,
                         "enabled": True
+                    },
+                    "gaze": {
+                        "duration": 3000,
+                        "enabled": True
+                    },
+                    "headPose": {
+                        "neutralRange": 5,
+                        "smoothingFrames": 10,
+                        "referenceFrames": 30
                     }
-                }
+                },
+                "sendDataInterval": 5000,
+                "maxAlerts": 10
             }
         }
     }],
     'responses': {
         200: {
-            'description': 'Configuration updated successfully',
+            'description': 'تم تحديث الإعدادات بنجاح',
             'examples': {
                 'application/json': {
                     'message': 'Configuration updated successfully',
@@ -435,15 +433,15 @@ def get_config():
             }
         },
         400: {
-            'description': 'Invalid input',
+            'description': 'إدخال غير صالح',
             'examples': {
                 'application/json': {
-                    'error': 'minDetectionConfidence must be between 0 and 1'
+                    'error': 'Error message describing the issue'
                 }
             }
         },
         500: {
-            'description': 'Server error',
+            'description': 'خطأ في الخادم',
             'examples': {
                 'application/json': {
                     'error': 'Internal server error while updating configuration'
@@ -454,16 +452,7 @@ def get_config():
 })
 def update_config(config_id):
     """
-    Update the model configuration with new parameters.
-    
-    This endpoint allows updating any part of the model configuration including:
-    - Face detection settings
-    - Pose estimation settings
-    - Camera resolution
-    - Attention factors
-    - Alert system thresholds
-    
-    All parameters are optional - only provided values will be updated.
+    تحديث إعدادات النموذج بناءً على المعطيات الجديدة
     """
     try:
         data = request.get_json()
@@ -478,10 +467,10 @@ def update_config(config_id):
 @model_config_bp.route('/reset-default', methods=['POST'])
 @swag_from({
     'tags': ['Model Config'],
-    'description': 'Reset configuration to default values',
+    'description': 'إعادة تعيين الإعدادات إلى القيم الافتراضية',
     'responses': {
-        200: {'description': 'Configuration reset to default'},
-        500: {'description': 'Server error'}
+        200: {'description': 'تم إعادة التعيين إلى القيم الافتراضية'},
+        500: {'description': 'خطأ في الخادم'}
     }
 })
 def reset_to_default():
@@ -491,13 +480,14 @@ def reset_to_default():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @model_config_bp.route('/default', methods=['GET'])
 @swag_from({
     'tags': ['Model Config'],
-    'description': 'Get default configuration values',
+    'description': 'استرجاع القيم الافتراضية للإعدادات (دون حفظها في قاعدة البيانات)',
     'responses': {
         200: {
-            'description': 'Default configuration',
+            'description': 'القيم الافتراضية',
             'examples': {
                 'application/json': {
                     "faceMeshOptions": {
@@ -523,32 +513,46 @@ def reset_to_default():
                     "noFaceDecrementFactor": 3,
                     "alerts": {
                         "head": {
-                            "downThreshold": 0.8,
-                            "lateralThreshold": 0.7,
+                            "upThreshold": -0.5,
+                            "downThreshold": 0.5,
+                            "lateralThreshold": 15,
                             "duration": 3000,
                             "enabled": {
+                                "up": True,
                                 "down": True,
-                                "left": False,
-                                "right": False
+                                "left": True,
+                                "right": True,
+                                "forward": True
                             },
                             "detectTurnOnly": True
                         },
                         "mouth": {
-                            "threshold": 0.01,
-                            "duration": 10000,
+                            "threshold": 0.05,
+                            "duration": 3000,
                             "enabled": True
+                        },
+                        "gaze": {
+                            "duration": 3000,
+                            "enabled": True
+                        },
+                        "headPose": {
+                            "neutralRange": 5,
+                            "smoothingFrames": 10,
+                            "referenceFrames": 30
                         }
-                    }
+                    },
+                    "sendDataInterval": 5000,
+                    "maxAlerts": 10
                 }
             }
         },
-        500: {'description': 'Server error'}
+        500: {'description': 'خطأ في الخادم'}
     }
 })
 def get_default_config():
     try:
         default_config = service.get_default_config()
-        # Remove id and updated_at from default config response
+        # إزالة الحقول التي ليست ضرورية في الرد مثل id و updated_at
         default_config.pop("id", None)
         default_config.pop("updated_at", None)
         return jsonify(default_config), 200

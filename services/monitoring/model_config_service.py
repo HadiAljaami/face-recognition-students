@@ -127,7 +127,7 @@ class ModelConfigService:
         head = alerts.get("head", {})
         if not 0 <= head.get("downThreshold", -1) <= 1:
             raise ValueError("Head down threshold must be between 0 and 1")
-        if not 0 <= head.get("lateralThreshold", -1) <= 1:
+        if not 0 <= head.get("lateralThreshold", -1) <= 180:
             raise ValueError("Lateral threshold must be between 0 and 1")
         if head.get("duration", 0) <= 0:
             raise ValueError("Alert duration must be positive")

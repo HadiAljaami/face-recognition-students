@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 class AlertRepository:
 
     def create(self, exam_id: int, student_id: int, device_id: int, 
-               alert_type: int, message: str = None) -> Dict:
+            alert_type: int, message: str = None) -> Dict:
         """Create new alert"""
         try:
             with get_db_connection() as conn:

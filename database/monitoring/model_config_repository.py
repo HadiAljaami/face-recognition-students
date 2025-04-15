@@ -38,22 +38,36 @@ class ModelConfigRepository:
             "noFaceDecrementFactor": row_dict["no_face_decrement_factor"],
             "alerts": {
                 "head": {
+                    "upThreshold": float(row_dict["head_up_threshold"]),
                     "downThreshold": float(row_dict["head_down_threshold"]),
                     "lateralThreshold": float(row_dict["head_lateral_threshold"]),
                     "duration": row_dict["head_duration"],
                     "enabled": {
+                        "up": row_dict["head_enabled_up"],
                         "down": row_dict["head_enabled_down"],
                         "left": row_dict["head_enabled_left"],
-                        "right": row_dict["head_enabled_right"]
-                    },
-                    "detectTurnOnly": row_dict["head_detect_turn_only"]
+                        "right": row_dict["head_enabled_right"],
+                        "forward": row_dict["head_enabled_forward"]
+                    }
                 },
                 "mouth": {
                     "threshold": float(row_dict["mouth_threshold"]),
                     "duration": row_dict["mouth_duration"],
                     "enabled": row_dict["mouth_enabled"]
+                },
+                "gaze": {
+                    "duration": row_dict["gaze_duration"],
+                    "enabled": row_dict["gaze_enabled"]
+                },
+                "headPose": {
+                    "neutralRange": row_dict["headpose_neutral_range"],
+                    "smoothingFrames": row_dict["headpose_smoothing_frames"],
+                    "referenceFrames": row_dict["headpose_reference_frames"]
                 }
-            }
+            },
+            # إعدادات إضافية
+            "sendDataInterval": row_dict["send_data_interval"],   # المدة قبل إرسال البيانات لقاعدة البيانات (بـ ms)
+            "maxAlerts": row_dict["max_alerts"]                     # عدد التنبيهات الافتراضي خلال هذه المدة
         }
 
     def get_config(self, config_id: int) -> Optional[Dict]:
@@ -88,7 +102,7 @@ class ModelConfigRepository:
             raise Exception(f"Failed to get active config: {str(e)}")
 
     def update_config(self, config_id: int, config_data: Dict) -> Dict:
-        """تحديث الإعدادات"""
+        """تحديث الإعدادات في قاعدة البيانات"""
         try:
             with get_db_connection() as conn:
                 with conn.cursor() as cursor:
@@ -97,59 +111,86 @@ class ModelConfigRepository:
                         UPDATE model_config SET
                             face_mesh_max_num_faces = %(maxNumFaces)s,
                             face_mesh_refine_landmarks = %(refineLandmarks)s,
-                            face_mesh_min_detection_confidence = %(minDetectionConfidence)s,
-                            face_mesh_min_tracking_confidence = %(minTrackingConfidence)s,
+                            face_mesh_min_detection_confidence = %(fm_minDetectionConfidence)s,
+                            face_mesh_min_tracking_confidence = %(fm_minTrackingConfidence)s,
                             pose_model_complexity = %(modelComplexity)s,
                             pose_smooth_landmarks = %(smoothLandmarks)s,
                             pose_enable_segmentation = %(enableSegmentation)s,
                             pose_smooth_segmentation = %(smoothSegmentation)s,
-                            pose_min_detection_confidence = %(minDetectionConfidence)s,
-                            pose_min_tracking_confidence = %(minTrackingConfidence)s,
+                            pose_min_detection_confidence = %(pose_minDetectionConfidence)s,
+                            pose_min_tracking_confidence = %(pose_minTrackingConfidence)s,
                             camera_width = %(width)s,
                             camera_height = %(height)s,
                             attention_decrement_factor = %(attentionDecrementFactor)s,
                             attention_increment_factor = %(attentionIncrementFactor)s,
                             no_face_decrement_factor = %(noFaceDecrementFactor)s,
+                            head_up_threshold = %(upThreshold)s,
                             head_down_threshold = %(downThreshold)s,
                             head_lateral_threshold = %(lateralThreshold)s,
-                            head_duration = %(duration)s,
+                            head_duration = %(headDuration)s,
+                            head_enabled_up = %(upEnabled)s,
                             head_enabled_down = %(downEnabled)s,
                             head_enabled_left = %(leftEnabled)s,
                             head_enabled_right = %(rightEnabled)s,
-                            head_detect_turn_only = %(detectTurnOnly)s,
-                            mouth_threshold = %(threshold)s,
-                            mouth_duration = %(duration)s,
-                            mouth_enabled = %(enabled)s
+                            head_enabled_forward = %(forwardEnabled)s,
+                            mouth_threshold = %(mouthThreshold)s,
+                            mouth_duration = %(mouthDuration)s,
+                            mouth_enabled = %(mouthEnabled)s,
+                            gaze_duration = %(gazeDuration)s,
+                            gaze_enabled = %(gazeEnabled)s,
+                            headpose_neutral_range = %(headPoseNeutralRange)s,
+                            headpose_smoothing_frames = %(headPoseSmoothingFrames)s,
+                            headpose_reference_frames = %(headPoseReferenceFrames)s,
+                            send_data_interval = %(sendDataInterval)s,
+                            max_alerts = %(maxAlerts)s
                         WHERE id = %(config_id)s
                         RETURNING *;
                         """,
                         {
                             "config_id": config_id,
+                            # faceMeshOptions
                             "maxNumFaces": config_data["faceMeshOptions"]["maxNumFaces"],
                             "refineLandmarks": config_data["faceMeshOptions"]["refineLandmarks"],
-                            "minDetectionConfidence": config_data["faceMeshOptions"]["minDetectionConfidence"],
-                            "minTrackingConfidence": config_data["faceMeshOptions"]["minTrackingConfidence"],
+                            "fm_minDetectionConfidence": config_data["faceMeshOptions"]["minDetectionConfidence"],
+                            "fm_minTrackingConfidence": config_data["faceMeshOptions"]["minTrackingConfidence"],
+                            # poseOptions
                             "modelComplexity": config_data["poseOptions"]["modelComplexity"],
                             "smoothLandmarks": config_data["poseOptions"]["smoothLandmarks"],
                             "enableSegmentation": config_data["poseOptions"]["enableSegmentation"],
                             "smoothSegmentation": config_data["poseOptions"]["smoothSegmentation"],
-                            "minDetectionConfidence": config_data["poseOptions"]["minDetectionConfidence"],
-                            "minTrackingConfidence": config_data["poseOptions"]["minTrackingConfidence"],
+                            "pose_minDetectionConfidence": config_data["poseOptions"]["minDetectionConfidence"],
+                            "pose_minTrackingConfidence": config_data["poseOptions"]["minTrackingConfidence"],
+                            # camera
                             "width": config_data["camera"]["width"],
                             "height": config_data["camera"]["height"],
+                            # عوامل الانتباه
                             "attentionDecrementFactor": config_data["attentionDecrementFactor"],
                             "attentionIncrementFactor": config_data["attentionIncrementFactor"],
                             "noFaceDecrementFactor": config_data["noFaceDecrementFactor"],
+                            # alerts -> head
+                            "upThreshold": config_data["alerts"]["head"]["upThreshold"],
                             "downThreshold": config_data["alerts"]["head"]["downThreshold"],
                             "lateralThreshold": config_data["alerts"]["head"]["lateralThreshold"],
-                            "duration": config_data["alerts"]["head"]["duration"],
+                            "headDuration": config_data["alerts"]["head"]["duration"],
+                            "upEnabled": config_data["alerts"]["head"]["enabled"]["up"],
                             "downEnabled": config_data["alerts"]["head"]["enabled"]["down"],
                             "leftEnabled": config_data["alerts"]["head"]["enabled"]["left"],
                             "rightEnabled": config_data["alerts"]["head"]["enabled"]["right"],
-                            "detectTurnOnly": config_data["alerts"]["head"]["detectTurnOnly"],
-                            "threshold": config_data["alerts"]["mouth"]["threshold"],
-                            "duration": config_data["alerts"]["mouth"]["duration"],
-                            "enabled": config_data["alerts"]["mouth"]["enabled"]
+                            "forwardEnabled": config_data["alerts"]["head"]["enabled"]["forward"],
+                            # alerts -> mouth
+                            "mouthThreshold": config_data["alerts"]["mouth"]["threshold"],
+                            "mouthDuration": config_data["alerts"]["mouth"]["duration"],
+                            "mouthEnabled": config_data["alerts"]["mouth"]["enabled"],
+                            # alerts -> gaze
+                            "gazeDuration": config_data["alerts"]["gaze"]["duration"],
+                            "gazeEnabled": config_data["alerts"]["gaze"]["enabled"],
+                            # alerts -> headPose
+                            "headPoseNeutralRange": config_data["alerts"]["headPose"]["neutralRange"],
+                            "headPoseSmoothingFrames": config_data["alerts"]["headPose"]["smoothingFrames"],
+                            "headPoseReferenceFrames": config_data["alerts"]["headPose"]["referenceFrames"],
+                            # إعدادات إضافية
+                            "sendDataInterval": config_data["sendDataInterval"],
+                            "maxAlerts": config_data["maxAlerts"]
                         }
                     )
                     updated_row = cursor.fetchone()
@@ -157,22 +198,17 @@ class ModelConfigRepository:
                     if not updated_row:
                         raise ValueError("Config not found or no changes made")
                     return self._convert_to_model(updated_row)
-        except UndefinedTable:
+        except UndefinedTable as e:
             conn.rollback()
             raise Exception("Model config table does not exist")
         except Exception as e:
             conn.rollback()
             raise Exception(f"Failed to update config: {str(e)}")
 
-    def reset_to_default(self) -> Dict:
-        """إعادة تعيين الإعدادات إلى القيم الافتراضية"""
-        default_config = self.get_default_config()
-        return self.update_config(default_config["id"], default_config)
-
     def get_default_config(self) -> Dict:
-        """الحصول على الإعدادات الافتراضية"""
+        """الحصول على الإعدادات الافتراضية طبقاً للمعطيات الجديدة"""
         return {
-            "id": 1,  # Assuming default config has ID=1
+            "id": 1,  # الافتراض أن الإعداد الافتراضي يحمل ID=1
             "faceMeshOptions": {
                 "maxNumFaces": 1,
                 "refineLandmarks": True,
@@ -196,21 +232,41 @@ class ModelConfigRepository:
             "noFaceDecrementFactor": 3,
             "alerts": {
                 "head": {
-                    "downThreshold": 0.8,
-                    "lateralThreshold": 0.7,
+                    "upThreshold": -0.5,
+                    "downThreshold": 0.5,
+                    "lateralThreshold": 15,
                     "duration": 3000,
                     "enabled": {
+                        "up": True,
                         "down": True,
-                        "left": False,
-                        "right": False,
+                        "left": True,
+                        "right": True,
+                        "forward": True,
                     },
-                    "detectTurnOnly": True,
                 },
                 "mouth": {
-                    "threshold": 0.01,
-                    "duration": 10000,
+                    "threshold": 0.05,
+                    "duration": 3000,
                     "enabled": True,
-                }
+                },
+                "gaze": {
+                    "duration": 3000,
+                    "enabled": True,
+                },
+                "headPose": {
+                    "neutralRange": 5,
+                    "smoothingFrames": 10,
+                    "referenceFrames": 30,
+                },
             },
+            # إعدادات إضافية:
+            "sendDataInterval": 5000,  # المدة (بـ ms) قبل إرسال البيانات إلى قاعدة البيانات
+            "maxAlerts": 10          # عدد التنبيهات الافتراضي خلال هذه المدة
+            ,
             "updated_at": datetime.now()
         }
+
+    def reset_to_default(self) -> Dict:
+        """إعادة تعيين الإعدادات إلى القيم الافتراضية"""
+        default_config = self.get_default_config()
+        return self.update_config(default_config["id"], default_config)

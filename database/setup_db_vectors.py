@@ -450,7 +450,7 @@ def add_required_constraints():
 
 def create_model_config_table():
     """
-    إنشاء جدول مبسط لتخزين إعدادات نموذج التعرف على الوجه والوضعيات
+    إنشاء جدول لتخزين إعدادات نموذج التعرف على الوجه والوضعيات بما يشمل الحقول الجديدة
     """
     query_create_model_config = """
     CREATE TABLE IF NOT EXISTS model_config (
@@ -478,19 +478,34 @@ def create_model_config_table():
         attention_increment_factor INTEGER DEFAULT 1,
         no_face_decrement_factor INTEGER DEFAULT 3,
         
-        -- إعدادات تنبيهات الرأس
-        head_down_threshold NUMERIC(3,2) DEFAULT 0.8,
-        head_lateral_threshold NUMERIC(3,2) DEFAULT 0.7,
+        -- إعدادات تنبيهات الرأس (alerts -> head)
+        head_up_threshold REAL DEFAULT -0.5,
+        head_down_threshold REAL DEFAULT 0.5,
+        head_lateral_threshold REAL DEFAULT 15,
         head_duration INTEGER DEFAULT 3000,
+        head_enabled_up BOOLEAN DEFAULT TRUE,
         head_enabled_down BOOLEAN DEFAULT TRUE,
-        head_enabled_left BOOLEAN DEFAULT FALSE,
-        head_enabled_right BOOLEAN DEFAULT FALSE,
-        head_detect_turn_only BOOLEAN DEFAULT TRUE,
+        head_enabled_left BOOLEAN DEFAULT TRUE,
+        head_enabled_right BOOLEAN DEFAULT TRUE,
+        head_enabled_forward BOOLEAN DEFAULT TRUE,
         
-        -- إعدادات تنبيهات الفم
-        mouth_threshold NUMERIC(4,3) DEFAULT 0.01,
-        mouth_duration INTEGER DEFAULT 10000,
+        -- إعدادات تنبيهات الفم (alerts -> mouth)
+        mouth_threshold NUMERIC(4,3) DEFAULT 0.05,
+        mouth_duration INTEGER DEFAULT 3000,
         mouth_enabled BOOLEAN DEFAULT TRUE,
+        
+        -- إعدادات تنبيهات النظرة (alerts -> gaze)
+        gaze_duration INTEGER DEFAULT 3000,
+        gaze_enabled BOOLEAN DEFAULT TRUE,
+        
+        -- إعدادات headPose (alerts -> headPose)
+        headpose_neutral_range INTEGER DEFAULT 5,
+        headpose_smoothing_frames INTEGER DEFAULT 10,
+        headpose_reference_frames INTEGER DEFAULT 30,
+        
+        -- إعدادات إضافية
+        send_data_interval INTEGER DEFAULT 5000,  -- مدة قبل إرسال البيانات (بـ ms)
+        max_alerts INTEGER DEFAULT 10,            -- عدد التنبيهات الافتراضي خلال هذه المدة
         
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -513,13 +528,13 @@ def create_model_config_table():
     
     try:
         execute_query(DB_URL, query_create_model_config)
-        print("Table 'model_config' created successfully with simplified structure.")
+        print("Table 'model_config' created successfully with the new structure.")
     except Exception as e:
-        print(f"Error creating simplified model_config table: {e}")
+        print(f"Error creating model_config table: {e}")
 
 def seed_default_model_config():
     """
-    Seed the database with default model configuration values
+    بذر قاعدة البيانات بالإعدادات الافتراضية الجديدة للنموذج
     """
     query_seed_data = """
     -- Insert default configuration if table is empty
@@ -539,16 +554,25 @@ def seed_default_model_config():
         attention_decrement_factor,
         attention_increment_factor,
         no_face_decrement_factor,
+        head_up_threshold,
         head_down_threshold,
         head_lateral_threshold,
         head_duration,
+        head_enabled_up,
         head_enabled_down,
         head_enabled_left,
         head_enabled_right,
-        head_detect_turn_only,
+        head_enabled_forward,
         mouth_threshold,
         mouth_duration,
-        mouth_enabled
+        mouth_enabled,
+        gaze_duration,
+        gaze_enabled,
+        headpose_neutral_range,
+        headpose_smoothing_frames,
+        headpose_reference_frames,
+        send_data_interval,
+        max_alerts
     )
     SELECT 
         1,                  -- face_mesh_max_num_faces
@@ -566,16 +590,25 @@ def seed_default_model_config():
         5,                  -- attention_decrement_factor
         1,                  -- attention_increment_factor
         3,                  -- no_face_decrement_factor
-        0.8,                -- head_down_threshold
-        0.7,                -- head_lateral_threshold
+        -0.5,               -- head_up_threshold
+        0.5,                -- head_down_threshold
+        15,                 -- head_lateral_threshold
         3000,               -- head_duration
-        TRUE,               -- head_enabled_down
-        FALSE,              -- head_enabled_left
-        FALSE,              -- head_enabled_right
-        TRUE,               -- head_detect_turn_only
-        0.01,               -- mouth_threshold
-        10000,              -- mouth_duration
-        TRUE                -- mouth_enabled
+        FALSE,               -- head_enabled_up
+        FALSE,               -- head_enabled_down
+        TRUE,               -- head_enabled_left
+        TRUE,               -- head_enabled_right
+        TRUE,               -- head_enabled_forward
+        0.05,               -- mouth_threshold
+        3000,               -- mouth_duration
+        TRUE,               -- mouth_enabled
+        3000,               -- gaze_duration
+        TRUE,               -- gaze_enabled
+        5,                  -- headpose_neutral_range
+        10,                 -- headpose_smoothing_frames
+        30,                 -- headpose_reference_frames
+        5000,               -- send_data_interval
+        10                  -- max_alerts
     WHERE NOT EXISTS (
         SELECT 1 FROM model_config
     );
@@ -585,7 +618,23 @@ def seed_default_model_config():
         execute_query(DB_URL, query_seed_data)
         print("Default model configuration seeded successfully.")
     except Exception as e:
-        print(f"Error seeding default model config: {e}")        
+        print(f"Error seeding default model config: {e}")   
+    
+def drop_table(table_name: str):
+    """
+    حذف الجدول المطلوب من قاعدة البيانات.
+    
+    :param table_name: اسم الجدول الذي تريد حذفه.
+    """
+    # ملاحظة: تأكد من صحة اسم الجدول لتفادي أي هجمات حقن SQL
+    query_drop_table = f"DROP TABLE IF EXISTS {table_name};"
+    
+    try:
+        execute_query(DB_URL, query_drop_table)
+        print(f"Table '{table_name}' has been dropped successfully.")
+    except Exception as e:
+        print(f"Error dropping table '{table_name}': {e}")
+
 
 
 if __name__ == "__main__":
@@ -604,5 +653,6 @@ if __name__ == "__main__":
     # print("="*50 + "\n")
     # add_required_constraints()
     #create_exam_distribution_table()
+    drop_table("model_config")
     create_model_config_table()
     seed_default_model_config()
