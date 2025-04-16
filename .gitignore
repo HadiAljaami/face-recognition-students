@@ -45,3 +45,6 @@ bower_components/
 # Project Specific
 uploads/
 temp/
+database/student_images
+*.sqlite3
+*.db
