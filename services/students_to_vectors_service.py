@@ -44,7 +44,6 @@ class StudentsToVectorsService:
         success_count = 0
         failure_count = 0
         failure_details = []
-
         for i in range(0, len(student_ids), batch_size):
             batch_ids = student_ids[i:i + batch_size]
             try:
@@ -53,12 +52,10 @@ class StudentsToVectorsService:
 
                 for student in students_data:
                     try:
-                        student_id, college, image_name = student[1], student[2], student[3]
+                        student_id, college, image_name = student[1], student[2], student[7]
                         image_path = StudentsToVectorsService.get_image_path(image_name)
-
                         # Convert image to vector
                         vector = ImageProcessor.convert_image_to_vector(image_path)
-
                         # Save vector to the database
                         StudentsToVectorsService.save_vector(student_id, college, vector)
                         success_count += 1
