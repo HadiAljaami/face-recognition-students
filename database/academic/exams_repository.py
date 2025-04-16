@@ -390,3 +390,43 @@ class ExamsRepository:
                     return cursor.fetchall() 
         except errors.Error as e:
             raise RuntimeError(f"Database operation failed: {str(e)}")
+        
+
+    # دالة لجلب بيانات الاختبار باستخدام exam_id
+    def get_exam_data(self,exam_id: int) -> dict:
+        query = """
+            SELECT exam_date, exam_start_time, exam_end_time, college_id, course_id,
+                level_id, major_id, semester_id, year_id
+            FROM Exams
+            WHERE exam_id = %s
+            LIMIT 1
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, (exam_id,))
+                    row = cursor.fetchone()
+                    if not row:
+                        raise ValueError(f"No exam found with exam_id: {exam_id}")
+                    
+                    exam_date = row.get("exam_date")
+                    exam_start_time = row.get("exam_start_time")
+                    exam_end_time = row.get("exam_end_time")
+
+                    exam_date_str = exam_date.strftime("%Y-%m-%d") if hasattr(exam_date, "strftime") else exam_date
+                    exam_start_time_str = exam_start_time.strftime("%H:%M:%S") if hasattr(exam_start_time, "strftime") else exam_start_time
+                    exam_end_time_str = exam_end_time.strftime("%H:%M:%S") if hasattr(exam_end_time, "strftime") else exam_end_time
+
+                    return {
+                        "exam_date": exam_date_str,
+                        "exam_start_time": exam_start_time_str,
+                        "exam_end_time": exam_end_time_str,
+                        "college_id": row.get("college_id"),
+                        "course_id": row.get("course_id"),
+                        "level_id": row.get("level_id"),
+                        "major_id": row.get("major_id"),
+                        "semester_id": row.get("semester_id"),
+                        "year_id": row.get("year_id")
+                    }
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch exam data for exam_id={exam_id}") from e

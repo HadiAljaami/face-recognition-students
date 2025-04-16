@@ -112,3 +112,8 @@ class ExamDistributionService:
             date_from=date_from,
             date_to=date_to
         )
+    
+
+    def get_exam_distribution_by_student(self,student_id: str) -> dict:
+        #لحلب بيانات اختبار الطالب من جدول توزيع الاختبارات
+        return self.repository.get_exam_distribution_by_student(student_id)

@@ -5,9 +5,8 @@ from services.students_service import fetch_student_info_by_number,fetch_student
 from database.vectors_repository import VectorsRepository
 from datetime import datetime, timedelta
 import os
-from database.connection import get_db_connection
-from psycopg.rows import dict_row 
-from psycopg import sql
+from services.academic.exam_distribution_service import ExamDistributionService
+from services.academic.exams_service import ExamsService
 
 vectors_routes = Blueprint("vectors_routes", __name__)
 
@@ -15,6 +14,8 @@ UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")  # مجلد مؤقت داخ
 
 repository = VectorsRepository()
 service = VectorsService(repository)
+exam_distribution_service = ExamDistributionService()
+exams_service = ExamsService()
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -324,10 +325,10 @@ def search_vectors():
             # Find the student data in students_dicts
             student_info = next((student for student in students_dicts if str(student["Number"]) == student_id), None)
             if student_info:
-                exam_distribution_data = get_exam_distribution_by_student(student_id)
+                exam_distribution_data = exam_distribution_service.get_exam_distribution_by_student(student_id)
                 if exam_distribution_data:
                     exam_id = exam_distribution_data.get("exam_id")
-                    exam_data = get_exam_data(exam_id)
+                    exam_data = exams_service.get_exam_data(exam_id)
                     if exam_data:
                         # استخراج تاريخ الاختبار ووقت بداية الاختبار
                         exam_date_str = exam_data.get("exam_date")
@@ -467,62 +468,3 @@ def search_vectors_by_college():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# دالة لجلب بيانات توزيع الاختبار (مثال)
-def get_exam_distribution_by_student(student_id: str) -> dict:
-    query = sql.SQL("""
-        SELECT id, student_id, student_name, exam_id, device_id, assigned_at
-        FROM exam_distribution
-        WHERE student_id = %s
-        LIMIT 1
-    """)
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute(query, (student_id,))
-                row = cursor.fetchone()
-                if row:
-                    return row  # row يكون من نوع dict بالفعل
-    except Exception as ex:
-        print(f"Error fetching exam distribution: {ex}")
-    return {}
-
-# دالة لجلب بيانات الاختبار من جدول الاختبارات باستخدام exam_id
-def get_exam_data(exam_id: int) -> dict:
-    query = """
-        SELECT exam_date, exam_start_time, exam_end_time, college_id, course_id,
-               level_id, major_id, semester_id, year_id
-        FROM Exams
-        WHERE exam_id = %s
-        LIMIT 1
-    """
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (exam_id,))
-                # بما أن نتيجة الاستعلام بالفعل عبارة عن dict (كما يظهر في print(row))
-                row = cursor.fetchone()
-                if row:
-                    # استخدام المفاتيح مباشرةً بدلاً من الفهارس
-                    exam_date = row.get("exam_date")
-                    exam_start_time = row.get("exam_start_time")
-                    exam_end_time = row.get("exam_end_time")
-                    
-                    exam_date_str = exam_date.strftime("%Y-%m-%d") if hasattr(exam_date, "strftime") else exam_date
-                    exam_start_time_str = exam_start_time.strftime("%H:%M:%S") if hasattr(exam_start_time, "strftime") else exam_start_time
-                    exam_end_time_str = exam_end_time.strftime("%H:%M:%S") if hasattr(exam_end_time, "strftime") else exam_end_time
-
-                    return {
-                        "exam_date": exam_date_str,
-                        "exam_start_time": exam_start_time_str,
-                        "exam_end_time": exam_end_time_str,
-                        "college_id": row.get("college_id"),
-                        "course_id": row.get("course_id"),
-                        "level_id": row.get("level_id"),
-                        "major_id": row.get("major_id"),
-                        "semester_id": row.get("semester_id"),
-                        "year_id": row.get("year_id")
-                    }
-    except Exception as ex:
-        print(f"Error fetching exam data: {ex}")
-    return {}

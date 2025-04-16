@@ -1,0 +1,143 @@
+@startuml CompleteSystemDiagram_Final
+
+' === Global Settings ===
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor #0078D7
+    AttributeFontColor Black
+    MethodFontColor Black
+}
+
+' === Routes ===
+class VectorsRoutes << (R,lightblue) >> {
+    +/vectors/add-vector (POST)
+    +/vectors/update-vector (PUT)
+    +/vectors/search (POST)
+    +/vectors/search-by-college (POST)
+}
+
+class StudentsRoutes << (R,lightblue) >> {
+    +/students/add (POST)
+    +/students/search (GET)
+    +/students/by-ids (POST)
+}
+
+class ConversionRoute << (R,lightblue) >> {
+    +/api/students-to-vectors (POST)
+}
+
+class LogRoutes << (R,lightblue) >> {
+    +/logs/students (GET)
+    +/logs/clear (POST)
+}
+
+' === Services ===
+class VectorsService {
+    + add_vector(student_id, college, vector)
+    + update_vector_by_id(vector_id, vector)
+    + delete_vector(student_id)
+    + get_all_vectors()
+    + get_vector_by_id(student_id)
+    + find_similar_vectors(vector, threshold, limit)
+    + search_vectors_by_college(vector, college, threshold, limit)
+}
+
+class StudentsToVectorsService {
+    + process_students_to_vectors(student_ids, batch_size)
+    + save_vector(student_id, college, vector)
+}
+
+class StudentServices {
+    + add_student(data, image_file)
+    + get_all_students()
+    + search_student_by_number(number)
+    + fetch_students_by_ids(ids)
+    + get_student_info_by_number(number)
+}
+
+' === Database ===
+class VectorsRepository {
+    + insert_vector(student_id, college, vector)
+    + update_vector_by_id(vector_id, vector)
+    + search_similar_vectors(vector, threshold, limit)
+    + get_all_student_ids()
+    + get_vector_by_student_id(student_id)
+}
+
+class StudentDB {
+    + create_table()
+    + create(**kwargs)
+    + all(**filters)
+    + find_by_number(number)
+    + fetch_students_info_by_ids(ids)
+    + get_student_info_by_number(number)
+}
+
+class DatabaseConnection {
+    + get_db_connection()
+}
+
+' === Utilities ===
+class ImageProcessor {
+    + convert_image_to_vector(image_path)
+    + compare_vectors(vector1, vector2)
+    + extract_best_face_vector(image)
+}
+
+class Logger {
+    + setup_logging()
+    + log_error(error_message, details)
+}
+
+' === Labeled Relationships ===
+
+' Route Connections
+VectorsRoutes --> VectorsService : "API Endpoint\nfor Vector Operations"
+StudentsRoutes --> StudentServices : "API Endpoint\nfor Student CRUD"
+ConversionRoute --> StudentsToVectorsService : "Trigger\nBatch Conversion"
+LogRoutes --> Logger : "Access\nLog Files"
+
+' Core Workflows
+StudentsToVectorsService --> StudentDB : "1. Fetch Student Data\n(IDs,Images,College)"
+StudentsToVectorsService --> ImageProcessor : "2. Convert Images\nto Vectors"
+StudentsToVectorsService --> VectorsService : "3. Store Vectors\nin Main DB"
+StudentsToVectorsService --> Logger : "Log Conversion\nErrors"
+
+' Data Management
+StudentServices --> StudentDB : "CRUD Operations\non Student Data"
+VectorsService --> VectorsRepository : "Persist/Query\nVectors"
+VectorsRepository --> DatabaseConnection : "PostgreSQL\nConnection"
+
+' Image Processing
+VectorsService --> ImageProcessor : "Vector\nComparison"
+StudentServices --> ImageProcessor : "Image\nValidation"
+
+' === Notes ===
+note top of StudentDB
+  Temporary SQLite3 Database
+  (Mock University API)
+  Standalone - No PostgreSQL connection
+  Will be replaced with real API later
+end note
+
+note right of ImageProcessor
+  Uses face_recognition library
+  Supports: PNG, JPG, JPEG
+  Max size: 5MB
+end note
+
+note left of Logger
+  Central Logging System:
+  - students_to_vectors.log
+  - Unified error tracking
+  - Used by multiple services
+end note
+
+note bottom of DatabaseConnection
+  PostgreSQL Connection Pool
+  Main system database
+  Used by VectorsRepository only
+end note
+
+@enduml

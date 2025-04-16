@@ -36,7 +36,9 @@ class ExamDistributionRepository {
     delete_multiple_distributions()
     get_student_by_id()
     get_exam_distribution_report()
+    get_exam_distribution_by_student()
     _format_header()
+   
 }
 
 class ExamsExcelRepository {
@@ -52,6 +54,7 @@ class ExamsRepository {
     filter_exams()
     get_exam_dates()
     get_exam_time_slots()
+    get_exam_data() 
 }
 
 class SemestersRepository {
@@ -122,6 +125,7 @@ class ExamDistributionService {
     get_student_info()
     get_distribution_by_id()
     filter_distributions()
+    get_exam_distribution_by_student()
         repository
     __init__()
 }
@@ -149,6 +153,7 @@ class ExamsService {
     get_exam_time_slots()
     get_exam_dates()
     get_exam_by_id()
+    get_exam_data() 
         repo
     __init__()
 }

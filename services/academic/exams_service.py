@@ -340,3 +340,7 @@ class ExamsService:
             raise ValueError(str(e))
         except Exception as e:
             raise RuntimeError(f"Failed to get exam: {str(e)}")
+        
+    def get_exam_data(self,exam_id: int) -> dict:
+        #جلب بيانات اختبار ما 
+        return self.repo.get_exam_data(exam_id)        

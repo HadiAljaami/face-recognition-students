@@ -693,3 +693,21 @@ class ExamDistributionRepository:
             'academic_year': header_data['academic_year']
         }
 
+    # دالة لجلب بيانات توزيع الاختبار لطالب معين
+    def get_exam_distribution_by_student(self,student_id: str) -> dict:
+        query = sql.SQL("""
+            SELECT id, student_id, student_name, exam_id, device_id, assigned_at
+            FROM exam_distribution
+            WHERE student_id = %s
+            LIMIT 1
+        """)
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(query, (student_id,))
+                    row = cursor.fetchone()
+                    if not row:
+                        raise ValueError(f"No exam distribution found for student_id: {student_id}")
+                    return row
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch exam distribution for student_id={student_id}") from e
