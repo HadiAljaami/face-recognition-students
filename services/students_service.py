@@ -1,14 +1,4 @@
-# from database.students import Student
 
-# def get_all_students():
-#     """إرجاع قائمة بجميع الطلاب"""
-#     db = Student()
-#     return db.all()
-
-# def search_student_by_name(name):
-#     """البحث عن طالب بالاسم"""
-#     db = Student()
-#     return db.all(StudentName=name)
 import os
 import uuid
 from werkzeug.utils import secure_filename

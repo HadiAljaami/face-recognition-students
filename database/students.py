@@ -166,19 +166,3 @@ class Student:
             print(f"Error while fetching students by IDs: {e}")
             return []
 
-    # def fetch_students_info_by_ids(self, ids):
-    #     """
-    #     Retrieve student data based on a list of IDs.
-    #     """
-    #     if not ids:  # التحقق إذا كانت القائمة فارغة
-    #         print("Error: The list of IDs is empty.")
-    #         return []
-
-    #     try:
-    #         # بناء الاستعلام باستخدام IN
-    #         placeholders = ', '.join(['?'] * len(ids))
-    #         query = f"SELECT StudentID, Number, College, ImagePath FROM {self.table_name} WHERE StudentID IN ({placeholders})"
-    #         return self.execute_read_query(query, tuple(ids))
-    #     except Exception as e:
-    #         print(f"Error while fetching students by IDs: {e}")
-    #         return []

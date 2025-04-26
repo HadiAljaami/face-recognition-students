@@ -79,24 +79,6 @@ class ExamDistributionService:
         return student_data
 
 
-
-    # def get_exam_distribution_report(self, exam_id: int) -> List[Dict]:
-    #     """
-    #     Get exam distribution grouped by rooms
-    #     Args:
-    #         exam_id: ID of the exam
-    #     Returns:
-    #         List of room groups with headers and students
-    #     Raises:
-    #         ValueError: If exam_id is invalid or no distribution found
-    #         RuntimeError: For database errors
-    #     """
-    #     if not isinstance(exam_id, int) or exam_id <= 0:
-    #         raise ValueError("Exam ID must be a positive integer")
-        
-    #     return self.repository.get_exam_distribution_report(exam_id)
-
-
     def get_distribution_by_id(self, distribution_id: int):
         return self.repository.get_distribution_by_id(distribution_id)
 

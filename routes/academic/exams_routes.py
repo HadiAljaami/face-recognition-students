@@ -160,69 +160,7 @@ def create_exam():
         return jsonify({'error': str(e)}), code
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
-#-----------------filter using post-------------------------------
 
-# @exams_bp.route('/filter', methods=['POST'])  # تغيير من GET إلى POST
-# @swag_from(merge_swagger({
-#     'tags': ['Academic - Exams'],
-#     'description': 'Filter exams by criteria',
-#     'parameters': [{
-#         'name': 'filters',
-#         'in': 'body',
-#         'required': False,
-#         'schema': {
-#             'type': 'object',
-#             'properties': {
-#                 'major_id': {'type': 'integer', 'example': 1},
-#                 'college_id': {'type': 'integer', 'example': 1},
-#                 'level_id': {'type': 'integer', 'example': 1},
-#                 'year_id': {'type': 'integer', 'example': 1},
-#                 'semester_id': {'type': 'integer', 'example': 1},
-#                 'exam_date': {'type': 'string', 'format': 'date', 'example': '2023-12-15'},
-#                 'start_time': {'type': 'string', 'format': 'time', 'example': '09:00:00'},
-#                 'end_time': {'type': 'string', 'format': 'time', 'example': '11:00:00'}
-#             }
-#         }
-#     }],
-#     'responses': {
-#         200: {
-#             'description': 'List of filtered exams',
-#             'schema': {
-#                 'type': 'array',
-#                 'items': {'$ref': '#/definitions/Exam'}
-#             }
-#         },
-#         400: {'description': 'Invalid filter parameters'},
-#         500: {'description': 'Server error'}
-#     }
-# }))
-# def filter_exams():
-#     data = request.get_json() or {}  # الحصول على البيانات ككائن JSON
-#     try:
-#         # Parse date and times
-#         filters = {
-#             'major_id': data.get('major_id'),
-#             'college_id': data.get('college_id'),
-#             'level_id': data.get('level_id'),
-#             'year_id': data.get('year_id'),
-#             'semester_id': data.get('semester_id'),
-#             'exam_date': datetime.strptime(data['exam_date'], '%Y-%m-%d').date() if data.get('exam_date') else None,
-#             'start_time': datetime.strptime(data['start_time'], '%H:%M:%S').time() if data.get('start_time') else None,
-#             'end_time': datetime.strptime(data['end_time'], '%H:%M:%S').time() if data.get('end_time') else None
-#         }
-        
-#         # إزالة القيم الفارغة
-#         filters = {k: v for k, v in filters.items() if v is not None}
-        
-#         results = service.filter_exams(**filters)
-#         return jsonify([serialize_exam(exam) for exam in results]), 200
-        
-#     except ValueError as e:
-#         return jsonify({'error': str(e)}), 400
-#     except Exception as e:
-#         return jsonify({'error': 'Server error', 'details': str(e)}), 500
-
-#------------------------------------------------
 @exams_bp.route('/filter', methods=['GET'])
 @swag_from(merge_swagger({
     'tags': ['Academic - Exams'],

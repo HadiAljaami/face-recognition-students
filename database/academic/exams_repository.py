@@ -4,38 +4,7 @@ from psycopg import sql, errors
 from datetime import datetime, date, time
 
 class ExamsRepository:
-    # def create_exam(self, course_id: int, major_id: int, college_id: int, 
-    #                level_id: int, year_id: int, semester_id: int,
-    #                exam_date: date = None,
-    #                exam_start_time: time = None, 
-    #                exam_end_time: time = None) -> Dict:
-    #     """Create a new exam with all time fields"""
-    #     query = sql.SQL("""
-    #     INSERT INTO Exams (
-    #         course_id, major_id, college_id, level_id, 
-    #         year_id, semester_id, exam_date, exam_start_time, exam_end_time
-    #     )
-    #     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    #     RETURNING exam_id, course_id, major_id, college_id, level_id, 
-    #              year_id, semester_id, exam_date, exam_start_time, 
-    #              exam_end_time, created_at;
-    #     """)
-    #     try:
-    #         with get_db_connection() as conn:
-    #             with conn.cursor() as cursor:
-    #                 cursor.execute(query, (
-    #                     course_id, major_id, college_id, level_id,
-    #                     year_id, semester_id, exam_date, 
-    #                     exam_start_time, exam_end_time
-    #                 ))
-    #                 result = cursor.fetchone()
-    #                 conn.commit()
-    #                 return result
-    #     except errors.ForeignKeyViolation as e:
-    #         raise ValueError(f"Invalid reference: {str(e)}")
-    #     except errors.Error as e:
-    #         raise RuntimeError(f"Database error: {str(e)}")
-
+   
     def create_exam(self, course_id: int, major_id: int, college_id: int, 
                 level_id: int, year_id: int, semester_id: int,
                 exam_date: date = None,

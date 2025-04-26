@@ -167,32 +167,6 @@ class ExamsService:
         if exam_start_time and exam_end_time and exam_start_time >= exam_end_time:
             raise ValueError("Exam start time must be before end time")
 
-    # def _validate_exam_data(self, exam_id: int, *args):
-    #     """Validate all input data for exam operations"""
-    #     # Validate exam_id
-    #     if not isinstance(exam_id, int) or exam_id <= 0:
-    #         raise ValueError("exam_id must be positive integer")
-
-    #     # Validate IDs (can be None or positive integers)
-    #     id_fields = ['course_id', 'major_id', 'college_id', 
-    #                 'level_id', 'year_id', 'semester_id']
-    #     for i, field in enumerate(id_fields):
-    #         if args[i] is not None and (not isinstance(args[i], int) or args[i] <= 0):
-    #             raise ValueError(f"{field} must be positive integer or null")
-
-    #     # Validate date/times (updated for time objects)
-    #     if args[6] is not None and not isinstance(args[6], date):
-    #         raise ValueError("exam_date must be date object or null")
-            
-    #     if args[7] is not None and not isinstance(args[7], time):  # Changed
-    #         raise ValueError("exam_start_time must be time object or null")
-            
-    #     if args[8] is not None and not isinstance(args[8], time):  # Changed
-    #         raise ValueError("exam_end_time must be time object or null")
-
-    #     # Validate time window (still works with time objects)
-    #     if args[7] and args[8] and args[7] >= args[8]:
-    #         raise ValueError("Exam start time must be before end time")
 
     def filter_exams(self, 
                    major_id: int = None, 

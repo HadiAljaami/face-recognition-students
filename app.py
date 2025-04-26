@@ -15,7 +15,6 @@ from routes.centers_routes import centers_bp
 from routes.users_routes import users_bp
 from routes.devices_routes import devices_bp
 
-from routes.exam_distribution_routes import exam_routes
 
 #------------academic------------------
 from routes.academic.exams_routes import init_app
@@ -53,7 +52,6 @@ app.register_blueprint(users_bp)
 app.register_blueprint(centers_bp)
 app.register_blueprint(devices_bp)
 
-app.register_blueprint(exam_routes)#, url_prefix="/exams"
 
 #------------academic------------------
 
